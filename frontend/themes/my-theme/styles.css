@@ -8,6 +8,10 @@
     font-family: 'Inter', sans-serif;
 }
 
+:root{
+    font-size: 24px;
+}
+
 html, body {
     margin: 0;
     padding: 0;
@@ -48,15 +52,22 @@ vaadin-list-box {
 
 /* Estilo dos itens */
 vaadin-item {
-    padding: 40px 40px;
+    padding: 2rem 2rem;
     background-color: rgba(246, 100, 53, 0.08);
     color: #F66435;
-    font-size: 28px;
+    font-size: 1rem;
     font-weight: 500;
     transition: all 0.2s ease;
     cursor: pointer;
     backdrop-filter: blur(2px);
     font-family: 'Inter', sans-serif;
+    border-radius: 0 !important;
+
+    /* Em relação ao texto */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 vaadin-item:hover {
@@ -66,6 +77,15 @@ vaadin-item:hover {
 
 vaadin-item[selected] {
     background-color: rgba(246, 100, 53, 0.25);
-    border: 1px solid #F66435;
     font-weight: 600;
+}
+
+@media (max-width: 1300px) {
+    :root {
+        font-size: 10px;
+    }
+
+    vaadin-item {
+        padding: 1rem 2rem;
+    }
 }
