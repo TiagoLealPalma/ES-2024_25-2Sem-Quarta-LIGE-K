@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+:host {
+    --lumo-base-color: #051014;
+    --lumo-primary-color: #F66435;
+    --lumo-body-text-color: rgb(255, 241, 208);
+    --lumo-border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+}
+
+:root{
+    font-size: 24px;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden !important;
+    background-color: #051014 !important;
+    font-family: 'Inter', sans-serif;
+    color: rgb(255, 241, 208);
+}
+
+vaadin-horizontal-layout {
+    display: flex;
+    height: 100vh !important;
+}
+
+vaadin-vertical-layout {
+    padding: 0 !important;
+}
+
+graph-viewer {
+    display: block !important;
+    height: 100vh !important;
+    width: 66.66vw !important;
+    margin: 0 !important;
+    border: none !important;
+    flex: 2 !important;
+    background-color: #051014;
+}
+
+vaadin-list-box {
+    flex: 1 !important;
+    height: 100vh !important;
+    background-color: rgb(255, 241, 208);
+    overflow-y: auto;
+    border-left: 2px solid #F6643540;
+}
+
+/* Estilo dos itens */
+vaadin-item {
+    padding: 2rem 2rem;
+    background-color: rgba(246, 100, 53, 0.08);
+    color: #F66435;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    backdrop-filter: blur(2px);
+    font-family: 'Inter', sans-serif;
+    border-radius: 0 !important;
+
+    /* Em relação ao texto */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+vaadin-item:hover {
+    background-color: rgba(246, 100, 53, 0.35);
+    transform: scale(1.02);
+}
+
+vaadin-item[selected] {
+    background-color: rgba(246, 100, 53, 0.25);
+    font-weight: 600;
+}
+
+@media (max-width: 1300px) {
+    :root {
+        font-size: 10px;
+    }
+
+    vaadin-item {
+        padding: 1rem 2rem;
+    }
+}
