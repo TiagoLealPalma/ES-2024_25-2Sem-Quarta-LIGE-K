@@ -25,6 +25,7 @@ public class Property {
 
     public Property(String parcelaId, String parcelaNum, double perimeter, double area,
                     Geometry geometry, Owner owner, String freguesia, String municipio, String ilha) {
+
         // Properties atributes
         this.parcelaId = parcelaId;
         this.parcelaNum = parcelaNum;
@@ -44,12 +45,16 @@ public class Property {
     public void addNeighbour(Property property){
         if(property == null)
             throw new IllegalArgumentException("Property cannot be null");
-
-        neighbourProperties.add(property);
+        if(!neighbourProperties.contains(property))
+            neighbourProperties.add(property);
     }
 
-
-
-
-
+    @Override
+    public String toString() {
+        return "Property{" +
+                "owner=" + owner +
+                ", parcela=" + parcelaId +
+                ", neighbourProperties=" + neighbourProperties.size() +
+                '}';
+    }
 }

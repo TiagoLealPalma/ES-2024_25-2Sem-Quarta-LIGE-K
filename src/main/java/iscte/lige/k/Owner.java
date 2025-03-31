@@ -8,10 +8,15 @@ public class Owner {
     private List<Property> properties;
     private int numOfProperties = 0;
 
+    public Owner (String name) {
+        this.name = name;
+        this.properties = new ArrayList<>();
+    }
+
     public Owner (String name, Property property) {
         this.name = name;
         this.properties = new ArrayList<>();
-        properties.add(property);
+        this.properties.add(property);
         numOfProperties++;
     }
 
@@ -31,4 +36,15 @@ public class Owner {
         return numOfProperties;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return "Owner{" +
+                "name='" + name + '\'' +
+                ", numOfProperties=" + numOfProperties +
+                '}';
+    }
 }

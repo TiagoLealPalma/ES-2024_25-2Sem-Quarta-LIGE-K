@@ -10,37 +10,26 @@ class GraphViewer extends HTMLElement {
         container.style.width = '100%';
         this.appendChild(container);
 
+        const rawData = this.graphData || this.getAttribute('graphData');
+
+        if (!rawData) {
+            console.error("Nenhum grafo recebido do backend.");
+            return;
+        }
+
+        let parsed;
+        try {
+            parsed = JSON.parse(rawData);
+        } catch (e) {
+            console.error("Erro ao fazer parse do JSON:", e);
+            return;
+        }
+
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/vis-network/standalone/umd/vis-network.min.js';
         script.onload = () => {
-            const nodes = new vis.DataSet([
-                { id: 1, label: 'Lisboa', color: '#F66435', font: { color: 'rgb(255, 241, 208)', face: 'Inter' } },
-                { id: 2, label: 'Pico', color: '#F66435', font: { color: 'rgb(255, 241, 208)', face: 'Inter' } },
-                { id: 3, label: 'Porto', color: '#F66435', font: { color: 'rgb(255, 241, 208)', face: 'Inter' } },
-                { id: 4, label: 'Faro', color: '#F66435', font: { color: 'rgb(255, 241, 208)', face: 'Inter' } },
-                { id: 5, label: 'Coimbra', color: '#F66435', font: { color: 'rgb(255, 241, 208)', face: 'Inter' } },
-                { id: 6, label: 'Braga', color: '#F66435', font: { color: 'rgb(255, 241, 208)', face: 'Inter' } },
-                { id: 7, label: 'Setúbal', color: '#F66435', font: { color: 'rgb(255, 241, 208)', face: 'Inter' } },
-                { id: 8, label: 'Évora', color: '#F66435', font: { color: 'rgb(255, 241, 208)', face: 'Inter' } },
-                { id: 9, label: 'Viseu', color: '#F66435', font: { color: 'rgb(255, 241, 208)', face: 'Inter' } },
-                { id: 10, label: 'Beja', color: '#F66435', font: { color: 'rgb(255, 241, 208)', face: 'Inter' } }
-            ]);
-
-            const edges = new vis.DataSet([
-                { from: 1, to: 2, color: { color: '#F66435' } },
-                { from: 1, to: 3, color: { color: '#F66435' } },
-                { from: 2, to: 4, color: { color: '#F66435' } },
-                { from: 2, to: 5, color: { color: '#F66435' } },
-                { from: 3, to: 6, color: { color: '#F66435' } },
-                { from: 3, to: 7, color: { color: '#F66435' } },
-                { from: 4, to: 8, color: { color: '#F66435' } },
-                { from: 5, to: 9, color: { color: '#F66435' } },
-                { from: 6, to: 10, color: { color: '#F66435' } },
-                { from: 10, to: 1, color: { color: '#F66435' } }, // para criar um loop cíclico
-                { from: 7, to: 8, color: { color: '#F66435' } },
-                { from: 9, to: 4, color: { color: '#F66435' } }
-            ]);
-
+            const nodes = new vis.DataSet(parsed.nodes);
+            const edges = new vis.DataSet(parsed.edges);
 
             const options = {
                 nodes: {
@@ -61,21 +50,55 @@ class GraphViewer extends HTMLElement {
                 },
                 edges: {
                     color: '#F66435',
-                    width: 2,
+                    width: 1.5,
                     arrows: 'none',
+                    smooth: {
+                        type: 'dynamic'
+                    }
                 },
                 layout: {
                     improvedLayout: true
                 },
                 physics: {
-                    enabled: true
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -50,
+                        centralGravity: 0.01,
+                        springLength: 100,
+                        springConstant: 0.08,
+                        damping: 0.4
+                    },
+                    stabilization: {
+                        iterations: 150,
+                        fit: true
+                    }
+                },
+                interaction: {
+                    dragView: true,
+                    zoomView: true
                 }
             };
 
             const data = { nodes, edges };
-            new vis.Network(container, data, options);
+            const network = new vis.Network(container, data, options);
+
+            // Desliga a física automaticamente após estabilização
+            network.once("stabilizationIterationsDone", function () {
+                network.setOptions({ physics: false });
+                console.log("Física desligada após estabilização.");
+            });
         };
+
         document.head.appendChild(script);
+    }
+
+    set graphData(value) {
+        this.setAttribute('graphData', value);
+    }
+
+    get graphData() {
+        return this.getAttribute('graphData');
     }
 }
 
