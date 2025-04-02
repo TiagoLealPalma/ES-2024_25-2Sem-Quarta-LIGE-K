@@ -1,4 +1,4 @@
-package iscte.lige.k;
+package iscte.lige.k.dataStructures;
 
 import org.locationtech.jts.geom.Geometry;
 
@@ -49,6 +49,7 @@ public class Property {
             neighbourProperties.add(property);
     }
 
+    // Getters
     @Override
     public String toString() {
         return "Property{" +
@@ -57,4 +58,24 @@ public class Property {
                 ", neighbourProperties=" + neighbourProperties.size() +
                 '}';
     }
+
+    public String getParcelaId() { return parcelaId; }
+
+    public String getParcelaNum() { return parcelaNum; }
+
+    public Geometry getGeometry() { return geometry; }
+
+    public double getArea() { return area; }
+
+    public double getPerimeter() { return perimeter; }
+
+    public String getFreguesia() { return freguesia; }
+
+    public String getMunicipio() { return municipio; }
+
+    public String getIlha() { return ilha; }
+
+    public Owner getOwner() { return owner; }
+
+    public List<Property> getNeighbourProperties() { return neighbourProperties; }
 }

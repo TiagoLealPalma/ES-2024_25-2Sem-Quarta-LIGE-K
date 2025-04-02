@@ -1,5 +1,7 @@
-package iscte.lige.k;
+package iscte.lige.k.service;
 
+import iscte.lige.k.dataStructures.Owner;
+import iscte.lige.k.dataStructures.Property;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
@@ -10,15 +12,19 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
 
+
+// Singleton instance loaded whenever the program is booted
 public class PropertiesLoader {
 
-    Map<Integer, Owner> owners = new HashMap<Integer, Owner>();
-    List<Property> properties = new ArrayList<Property>();
+    private static PropertiesLoader instance = null;
+    private static boolean loaded = false;
 
+    private Map<Integer, Owner> owners = new HashMap<Integer, Owner>();
+    private List<Property> properties = new ArrayList<Property>();
 
     // On initialization, parse and calculate the data structures with the csv file
     // on src/main/resources
-    public PropertiesLoader(){
+    private PropertiesLoader(){
         File csv = new File("src/main/resources/Madeira-Moodle-1.1.csv");
         if (!csv.exists()) {
             System.err.println("Csv file does not exist, or path is incorrect");
@@ -71,7 +77,7 @@ public class PropertiesLoader {
                 int filled = (int) ((progress / (double) totalComparisons) * barLength);
                 String bar = "[" + "#".repeat(filled) + " ".repeat(barLength - filled) + "] " + percent + "%";
 
-                System.out.print("\r" + bar);
+                //System.out.print("\r" + bar);
 
                 //DEVELPOMENT_LIMIT--;
             }
@@ -85,17 +91,31 @@ public class PropertiesLoader {
             // Insert data into a spatially driven tree so it drives the magnitude of connect method down
             STRtree index = new STRtree();
             for (Property p : properties) {
-                index.insert(p.geometry.getEnvelopeInternal(), p);
+                index.insert(p.getGeometry().getEnvelopeInternal(), p);
             }
 
             // Run through the list and connect properties which geometry touches
             connectNeighbours(index);
+            calculateAllAvgAreas();
+
+            // Inform that the instance is fully loaded and safe to use
+            synchronized (this) {
+                loaded = true;
+                this.notifyAll();
+                System.err.println("PropertiesLoader Instance has been fully loaded.");
+            }
 
         } catch (ParseException | FileNotFoundException e) {
             System.err.println("Error parsing geometry: " + e.getMessage());
         }
-
     }
+
+    private void calculateAllAvgAreas() {
+        for (Owner o : owners.values()){
+            o.calculateAvgAreas();
+        }
+    }
+
 
     private void connectNeighbours(STRtree index) {
         System.err.println("\nCalculating property neighbours...");
@@ -104,12 +124,12 @@ public class PropertiesLoader {
         int barLength = 100; // Número de caracteres na barra
 
         for (Property p1 : properties) {
-            Geometry g1 = p1.geometry.buffer(0); // Clean faulty geometry
-            List<Property> candidates = index.query(p1.geometry.getEnvelopeInternal());
+            Geometry g1 = p1.getGeometry().buffer(0); // Clean faulty geometry
+            List<Property> candidates = index.query(p1.getGeometry().getEnvelopeInternal());
             for (Property p2: candidates) {
                 if(p1.equals(p2)) continue;
-                Geometry g2 = p2.geometry.buffer(0);
-                if (p1.geometry.intersects(p2.geometry) || p1.geometry.touches(p2.geometry)) {
+                Geometry g2 = p2.getGeometry().buffer(0);
+                if (g1.intersects(g2) || g1.touches(g2)) {
                     p1.addNeighbour(p2);
                     p2.addNeighbour(p1);
                 }
@@ -119,22 +139,33 @@ public class PropertiesLoader {
             int filled = (int) ((progress / (double) totalComparisons) * barLength);
             String bar = "[" + "#".repeat(filled) + " ".repeat(barLength - filled) + "] " + percent + "%";
 
-            System.out.print("\r" + bar);
+            //System.out.print("\r" + bar);
         }
     }
 
-    public List<Property> getPropertiesWithNeighbours () {
+    public synchronized List<Property> getPropertiesWithNeighbours () {
+        synchronized (this) {
+            while (!loaded) {
+                try {
+                    this.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
         List<Property> results = new ArrayList<>();
         for(Property p : properties){
-            if(!p.neighbourProperties.isEmpty())
+            if(!p.getNeighbourProperties().isEmpty())
                 results.add(p);
         }
         return results.stream().limit(1000).toList(); // DEBUG, remover depois
     }
 
-    public static void main(String[] args) {
-        PropertiesLoader loader = new PropertiesLoader();
+    public static synchronized PropertiesLoader getInstance(){
+        if(instance == null){
+            instance = new PropertiesLoader();
+        }
+        return instance;
     }
-
-
 }

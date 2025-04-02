@@ -1,4 +1,6 @@
-package iscte.lige.k;
+package iscte.lige.k.dataStructures;
+
+import org.locationtech.jts.geom.Geometry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,16 +30,33 @@ public class Owner {
         numOfProperties++;
     }
 
-    public List<Property> getProperties() {
-        return properties;
+    public void calculateAvgArea(){
+        List<Property> uniqueProperties = new ArrayList<>(); // Properties that are not neighbours of each other
+        List<List<Property>> jointProperties = new ArrayList<>(); // Properties next to one another
+
+        for (Property property : properties) {
+            Geometry g1 = property.getGeometry().buffer(0);
+            for (Property otherProperty : properties) {
+                Geometry g2 = otherProperty.getGeometry().buffer(0);
+                if(g1.touches(g2) || g1.intersects(g2)){
+
+                }
+            }
+        }
+
+
     }
 
-    public int getNumOfProperties() {
-        return numOfProperties;
-    }
+    // Getters
 
     public String getName() {
         return name;
+    }
+
+    public List<Property> getProperties() { return properties; }
+
+    public int getNumOfProperties() {
+        return numOfProperties;
     }
 
     @Override

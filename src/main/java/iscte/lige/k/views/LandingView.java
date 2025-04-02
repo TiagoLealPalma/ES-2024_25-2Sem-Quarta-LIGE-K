@@ -1,4 +1,4 @@
-package iscte.lige.k;
+package iscte.lige.k.views;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;

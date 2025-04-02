@@ -1,4 +1,4 @@
-package iscte.lige.k;
+package iscte.lige.k.views;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -6,6 +6,8 @@ import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Div;
+import iscte.lige.k.service.PropertiesLoader;
+import iscte.lige.k.dataStructures.Property;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -39,7 +41,7 @@ public class GraphViewerComponent extends Div {
     @ClientCallable
     public void startLoadingOnServer() {
         System.err.println("Data requested from client. Loading graph...");
-        PropertiesLoader loader = new PropertiesLoader();
+        PropertiesLoader loader = PropertiesLoader.getInstance();
         JsonObject json = buildGraphData(loader.getPropertiesWithNeighbours());
         System.err.println("Sending graph to JS...");
         getElement().setAttribute("graphData", json.toString());
@@ -54,17 +56,17 @@ public class GraphViewerComponent extends Div {
         System.err.println("\n Creating nodes... (" + properties.size() + " properties to evaluate, sorry for the delay :) )");
         // Insert all nodes before checking connections
         for (Property p : properties) {
-            String id = p.parcelaId;
+            String id = p.getParcelaId();
 
             if (addedNodes.add(id)) {
                 JsonObject node = new JsonObject();
                 node.addProperty("id", id);
-                node.addProperty("label", p.owner.getName());
+                node.addProperty("label", p.getOwner().getName());
 
-                node.addProperty("value", (int) Math.log(p.area)); // este valor será usado para calcular o tamanho
+                node.addProperty("value", (int) Math.log(p.getArea())); // este valor será usado para calcular o tamanho
 
                 // Info that appears whenever the node is hovered
-                node.addProperty("title", "Área: " + p.area + " m²\nFreguesia: " + p.freguesia);
+                node.addProperty("title", "Parcela: " + p.getParcelaId() + "\nÁrea: " + p.getArea() + " m²\nFreguesia: " + p.getFreguesia());
                 nodes.add(node);
             } else
                 System.err.println("DEBUG: Erro na construção de nodes (Propriedades duplicadas)");
@@ -73,18 +75,18 @@ public class GraphViewerComponent extends Div {
         System.err.println("Creating edges...");
         List<String> addedEdges = new ArrayList<>();
         for (Property p : properties) {
-            String id = p.parcelaId;
-            for (Property neighbor : p.neighbourProperties) {
-                String nid = neighbor.parcelaId;
+            String id = p.getParcelaId();
+            for (Property neighbor : p.getNeighbourProperties()) {
+                String nid = neighbor.getParcelaId();
 
                 if (addedNodes.add(nid)) { // Se não foi inserida
-                    System.err.println("Propriedade " + neighbor.parcelaId + " não adicionada nao primeira volta," +
+                    System.err.println("Propriedade " + neighbor.getParcelaId() + " não adicionada nao primeira volta," +
                             " mas referenciada como vizinha (Verificar construção de vizinhos)");
 
                     // Still adds the node so it doesn't stop the graph execution
                     JsonObject neighborNode = new JsonObject();
                     neighborNode.addProperty("id", nid);
-                    neighborNode.addProperty("label", neighbor.owner.getName());
+                    neighborNode.addProperty("label", neighbor.getOwner().getName());
                     nodes.add(neighborNode);
                 }
 

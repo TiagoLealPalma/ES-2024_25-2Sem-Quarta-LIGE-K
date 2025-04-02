@@ -1,10 +1,12 @@
-package iscte.lige.k;
+package iscte.lige.k.views;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Div;
+import iscte.lige.k.service.PropertiesLoader;
+import iscte.lige.k.dataStructures.Property;
 
 import java.util.List;
 
@@ -17,7 +19,7 @@ public class MapViewerComponent extends Div {
     }
 
     public void sendGeoJsonToJs() {
-        PropertiesLoader loader = new PropertiesLoader();
+        PropertiesLoader loader = PropertiesLoader.getInstance();
         List<Property> properties = loader.getPropertiesWithNeighbours();
 
         JsonArray jsonFeatures = new JsonArray();
@@ -25,7 +27,7 @@ public class MapViewerComponent extends Div {
         for (Property p : properties) {
             JsonArray coordinates = new JsonArray();
 
-            for (var coord : p.geometry.getCoordinates()) {
+            for (var coord : p.getGeometry().getCoordinates()) {
                 JsonArray latlon = new JsonArray();
                 latlon.add(coord.getY()); // latitude
                 latlon.add(coord.getX()); // longitude
@@ -34,9 +36,9 @@ public class MapViewerComponent extends Div {
 
             JsonObject feature = new JsonObject();
             feature.add("coordinates", coordinates);
-            feature.addProperty("owner", p.owner.getName());
-            feature.addProperty("area", p.area);
-            feature.addProperty("freguesia", p.freguesia);
+            feature.addProperty("owner", p.getOwner().getName());
+            feature.addProperty("area", p.getArea());
+            feature.addProperty("freguesia", p.getFreguesia());
             jsonFeatures.add(feature);
         }
 

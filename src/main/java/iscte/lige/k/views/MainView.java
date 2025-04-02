@@ -1,4 +1,4 @@
-package iscte.lige.k;
+package iscte.lige.k.views;
 
 import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.html.Div;
