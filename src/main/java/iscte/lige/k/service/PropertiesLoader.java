@@ -112,7 +112,7 @@ public class PropertiesLoader {
 
     private void calculateAllAvgAreas() {
         for (Owner o : owners.values()){
-            o.calculateAvgAreas();
+            o.calculateAvgArea();
         }
     }
 
@@ -168,4 +168,7 @@ public class PropertiesLoader {
         }
         return instance;
     }
+
+
+
 }
