@@ -2,41 +2,49 @@ package iscte.lige.k.views;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
+
+import java.util.List;
+
 
 @Route("")
 public class LandingView extends VerticalLayout {
 
     public LandingView() {
+        addClassName("landing-view");
         setSizeFull();
-        getStyle().set("background", "#0f1117");
 
+        // Título
         H1 titulo = new H1("Exploração de Terrenos");
-        titulo.getStyle()
-                .set("color", "#FFF1D0")
-                .set("margin", "2rem auto");
+        titulo.addClassName("titulo");
 
-        Button verGrafo = new Button("Ver Grafo por Freguesia", e ->
-                verGrafo());
+        // Dropdown
+        ComboBox<String> freguesiaDropdown = new ComboBox<>("Selecione freguesia");
+        freguesiaDropdown.setItems(List.of("Ajuda", "Alvalade", "Arroios", "Beato", "Benfica"));
+        freguesiaDropdown.addClassName("dropdown-freguesia");
 
-        Button verMapa = new Button("Ver Mapa Geográfico", e ->
-                verMapa());
+        // Botão
+        Button verGrafo = new Button("Ver Grão por Freguesia", e -> verGrafo(freguesiaDropdown.getValue()));
+        verGrafo.addClassName("botao-ver-grafo");
 
-        verGrafo.getStyle().set("margin", "1rem").set("background", "#F66435").set("color", "white");
-        verMapa.getStyle().set("margin", "1rem").set("background", "#F66435").set("color", "white");
+        // Zona dos elementos escondidos
+        Div escondido = new Div(freguesiaDropdown, verGrafo);
+        escondido.addClassName("conteudo-escondido");
 
-        add(titulo, verGrafo, verMapa);
-        setAlignItems(Alignment.CENTER);
-        setJustifyContentMode(JustifyContentMode.CENTER);
+        // Wrapper geral
+        Div container = new Div(titulo, escondido);
+        container.addClassName("conteudo-wrapper");
+
+        add(container);
     }
 
-    private void verGrafo() {
-        UI.getCurrent().navigate("Trades");
-    }
-
-    private void verMapa() {
-        UI.getCurrent().navigate("mapa");
+    private void verGrafo(String freguesia) {
+        if (freguesia != null && !freguesia.isEmpty()) {
+            UI.getCurrent().navigate("Trades?freguesia=" + freguesia);
+        }
     }
 }

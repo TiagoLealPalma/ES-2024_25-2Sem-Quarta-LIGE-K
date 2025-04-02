@@ -23,6 +23,97 @@ html, body {
     color: rgb(255, 241, 208);
 }
 
+/* LANDING PAGE */
+
+.landing-view {
+    background-color: #0f1117;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.conteudo-wrapper {
+    position: relative;
+    width: 70%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    text-align: center;
+    align-items: center
+
+}
+
+.titulo {
+    height: 10%;
+    background-color: #0f1117 ;
+    color: #FFF1D0;
+    margin: 2rem auto;
+    font-size: 4rem;
+    padding: 3rem;
+    border: 1rem solid #F66435;
+    border-radius: 3rem;
+    cursor: pointer;
+    transition: transform 1s ease-out;
+    z-index: 2;
+}
+
+.conteudo-wrapper:hover .titulo {
+    transform: translateY(-120%);
+}
+
+
+.dropdown-freguesia::selection .titulo {
+    transform: translateY(-120%);
+}
+
+.conteudo-escondido {
+    position: absolute;
+    top: 40%;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
+    align-items: center;
+    z-index: 1;
+}
+
+
+.area-acoes {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.dropdown-freguesia {
+    width: 50%;
+    padding: 0.5rem;
+    background-color: #0f1117;
+    color: #FFF1D0;
+}
+
+#label-vaadin-combo-box-0{
+    color: #FFF1D0;
+}
+
+.botao-ver-grafo {
+
+    margin-top: 2rem;
+    background-color: #F66435;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* TRADES PAGE */
+
+
+
 vaadin-horizontal-layout {
     display: flex;
     height: 100vh !important;

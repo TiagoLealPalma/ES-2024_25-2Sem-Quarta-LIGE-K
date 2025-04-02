@@ -127,7 +127,7 @@ class GraphViewer extends HTMLElement {
                     damping: 0.4
                 },
                 stabilization: {
-                    iterations: 150,
+                    iterations: 300,
                     fit: true
                 }
             },
@@ -148,13 +148,6 @@ class GraphViewer extends HTMLElement {
                 this.$server.graphFinishedLoading();
             }
 
-            // Force the graph to fit the screen
-            network.fit({
-                animation: {
-                    duration: 500,
-                    easingFunction: "easeInOutQuad"
-                }
-            });
         });
     }
 
