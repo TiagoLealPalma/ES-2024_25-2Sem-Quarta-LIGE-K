@@ -170,5 +170,13 @@ public class PropertiesLoader {
     }
 
 
-
+    public static void main(String[] args) {
+        PropertiesLoader p = new PropertiesLoader();
+        Owner o = p.owners.get(800);
+        System.out.println(o.getNumOfProperties());
+        for (Property p1 : o.getProperties()) {
+            System.out.println(p1.getArea());
+        }
+        System.err.println("Area media: " + o.calculateAvgArea());
+    }
 }
