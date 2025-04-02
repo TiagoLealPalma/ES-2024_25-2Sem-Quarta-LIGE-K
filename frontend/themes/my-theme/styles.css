@@ -56,9 +56,10 @@ vaadin-list-box {
     flex: 1 !important;
     height: 100vh !important;
     background-color: rgb(255, 241, 208);
+    background-color: rgba(54,47,46,0.41);
     overflow-y: auto;
     border-left: 2px solid #F6643540;
-}
+    /*border-left: 2px solid #F6643540;*/
 
 /* Estilo dos itens */
 vaadin-item {
