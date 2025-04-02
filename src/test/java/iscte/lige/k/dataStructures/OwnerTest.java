@@ -4,8 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTReader;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class OwnerTest {
