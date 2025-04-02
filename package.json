@@ -70,6 +70,7 @@
     "construct-style-sheets-polyfill": "3.1.0",
     "date-fns": "2.29.3",
     "hasown": "^2.0.2",
+    "leaflet": "^1.9.4",
     "lit": "3.1.0",
     "path-scurry": "^2.0.0"
   },
@@ -179,7 +180,7 @@
       "workbox-core": "7.0.0",
       "workbox-precaching": "7.0.0"
     },
-    "hash": "e2acc9464aa558ee10431b533fcddf2b1b7edd4e11eba504ee8b5ad68cb40606"
+    "hash": "ff6e1adc1cffb377266840831c8a7172c7f933e7644c25c5cbbc3e50d62e90ca"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
@@ -250,6 +251,7 @@
     "@vaadin/vaadin-themable-mixin": "$@vaadin/vaadin-themable-mixin",
     "date-fns": "$date-fns",
     "path-scurry": "$path-scurry",
-    "hasown": "$hasown"
+    "hasown": "$hasown",
+    "leaflet": "$leaflet"
   }
 }

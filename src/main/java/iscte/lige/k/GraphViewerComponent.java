@@ -2,10 +2,10 @@ package iscte.lige.k;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Div;
-
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,15 +15,35 @@ import java.util.Set;
 @Tag("graph-viewer")
 @JsModule("./graph-viewer.js")
 public class GraphViewerComponent extends Div {
+    Runnable onGraphLoadedCallback;
+
     public GraphViewerComponent() {
-        getNodesAndEdges();
+        // JS irá iniciar o carregamento chamando @ClientCallable
+        System.err.println("GraphViewerComponent initialized. Awaiting JS request...");
     }
 
-    public void getNodesAndEdges(){
+
+    @ClientCallable
+    public void graphFinishedLoading() {
+        System.err.println("Graph loaded on JS");
+        if (onGraphLoadedCallback != null) {
+            onGraphLoadedCallback.run();
+        }
+    }
+
+    public void onGraphLoaded(Runnable callback) {
+        this.onGraphLoadedCallback = callback;
+    }
+
+    // Method called from JS
+    @ClientCallable
+    public void startLoadingOnServer() {
+        System.err.println("Data requested from client. Loading graph...");
         PropertiesLoader loader = new PropertiesLoader();
         JsonObject json = buildGraphData(loader.getPropertiesWithNeighbours());
         System.err.println("Sending graph to JS...");
-        getElement().setProperty("graphData", json.toString()); // Adds the JSon as property to this html element
+        getElement().setAttribute("graphData", json.toString());
+
     }
 
     public JsonObject buildGraphData(List<Property> properties) {
@@ -40,6 +60,9 @@ public class GraphViewerComponent extends Div {
                 JsonObject node = new JsonObject();
                 node.addProperty("id", id);
                 node.addProperty("label", p.owner.getName());
+
+                node.addProperty("value", (int) Math.log(p.area)); // este valor será usado para calcular o tamanho
+
                 // Info that appears whenever the node is hovered
                 node.addProperty("title", "Área: " + p.area + " m²\nFreguesia: " + p.freguesia);
                 nodes.add(node);
@@ -55,7 +78,7 @@ public class GraphViewerComponent extends Div {
                 String nid = neighbor.parcelaId;
 
                 if (addedNodes.add(nid)) { // Se não foi inserida
-                    System.err.println("Propriedade "+ neighbor.parcelaId + " não adicionada nao primeira volta," +
+                    System.err.println("Propriedade " + neighbor.parcelaId + " não adicionada nao primeira volta," +
                             " mas referenciada como vizinha (Verificar construção de vizinhos)");
 
                     // Still adds the node so it doesn't stop the graph execution
@@ -85,5 +108,4 @@ public class GraphViewerComponent extends Div {
 
         return graph;
     }
-
 }

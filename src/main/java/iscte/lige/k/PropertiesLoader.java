@@ -35,7 +35,9 @@ public class PropertiesLoader {
             int progress = 0;
             int barLength = 100;
 
-            while(s.hasNextLine()){
+            int DEVELPOMENT_LIMIT = 1000;
+
+            while(s.hasNextLine() && DEVELPOMENT_LIMIT != 0){
                 String line = s.nextLine();
                 String[] data = line.split(";");
 
@@ -70,6 +72,8 @@ public class PropertiesLoader {
                 String bar = "[" + "#".repeat(filled) + " ".repeat(barLength - filled) + "] " + percent + "%";
 
                 System.out.print("\r" + bar);
+
+                //DEVELPOMENT_LIMIT--;
             }
 
             int totalProperties = properties.size();
