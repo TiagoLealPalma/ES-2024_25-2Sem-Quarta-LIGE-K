@@ -3,16 +3,20 @@ package iscte.lige.k.views;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
+import iscte.lige.k.service.PropertiesLoader;
 
 import java.util.List;
 
 
 @Route("")
+@JsModule("./landing.js")
 public class LandingView extends VerticalLayout {
+    private PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();
 
     public LandingView() {
         addClassName("landing-view");
@@ -24,11 +28,14 @@ public class LandingView extends VerticalLayout {
 
         // Dropdown
         ComboBox<String> freguesiaDropdown = new ComboBox<>("Selecione freguesia");
-        freguesiaDropdown.setItems(List.of("Ajuda", "Alvalade", "Arroios", "Beato", "Benfica"));
+        List<String> options = propertiesLoader.getFreguesias();
+        options.add("Outras");
+        options.add("Todas");
+        freguesiaDropdown.setItems(options);
         freguesiaDropdown.addClassName("dropdown-freguesia");
 
         // Botão
-        Button verGrafo = new Button("Ver Grão por Freguesia", e -> verGrafo(freguesiaDropdown.getValue()));
+        Button verGrafo = new Button("Ver Trocas", e -> verGrafo(freguesiaDropdown.getValue()));
         verGrafo.addClassName("botao-ver-grafo");
 
         // Zona dos elementos escondidos
@@ -40,6 +47,9 @@ public class LandingView extends VerticalLayout {
         container.addClassName("conteudo-wrapper");
 
         add(container);
+
+        // Ativar o listener no titulo
+        getElement().executeJs("window.activateTituloOnce && window.activateTituloOnce()");
     }
 
     private void verGrafo(String freguesia) {

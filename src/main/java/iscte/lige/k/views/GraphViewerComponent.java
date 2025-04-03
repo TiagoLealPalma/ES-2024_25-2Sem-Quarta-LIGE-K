@@ -53,7 +53,7 @@ public class GraphViewerComponent extends Div {
         JsonArray edges = new JsonArray();
         Set<String> addedNodes = new HashSet<>();
 
-        System.err.println("\n Creating nodes... (" + properties.size() + " properties to evaluate, sorry for the delay :) )");
+        System.err.println("\nCreating nodes... (" + properties.size() + " properties to evaluate, sorry for the delay :) )");
         // Insert all nodes before checking connections
         for (Property p : properties) {
             String id = p.getParcelaId();

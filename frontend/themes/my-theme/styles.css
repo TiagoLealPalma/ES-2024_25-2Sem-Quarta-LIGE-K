@@ -40,32 +40,31 @@ html, body {
     overflow: hidden;
     display: flex;
     text-align: center;
-    align-items: center
+    align-items: center;
+    justify-content: center;
 
 }
 
 .titulo {
     height: 10%;
-    background-color: #0f1117 ;
-    color: #FFF1D0;
-    margin: 2rem auto;
-    font-size: 4rem;
-    padding: 3rem;
+    width: 100%;
+    background-color: #0f1117;
+    color: #fff1d0;
+    margin: 2rem;
+    font-size: 5rem;
+    padding: 3rem 4rem;
     border: 1rem solid #F66435;
     border-radius: 3rem;
     cursor: pointer;
-    transition: transform 1s ease-out;
+    transition: transform 0.7s ease-out;
     z-index: 2;
 }
 
-.conteudo-wrapper:hover .titulo {
-    transform: translateY(-120%);
+.titulo.slide {
+    transform: translateY(-140%);
 }
 
 
-.dropdown-freguesia::selection .titulo {
-    transform: translateY(-120%);
-}
 
 .conteudo-escondido {
     position: absolute;
@@ -89,7 +88,7 @@ html, body {
 }
 
 .dropdown-freguesia {
-    width: 50%;
+    width: 40%;
     padding: 0.5rem;
     background-color: #0f1117;
     color: #FFF1D0;
@@ -111,8 +110,6 @@ html, body {
 }
 
 /* TRADES PAGE */
-
-
 
 vaadin-horizontal-layout {
     display: flex;
@@ -142,7 +139,7 @@ leaflet-map-viewer {
     flex: 2 !important;
     background-color: #051014;
 }
-
+/* LISTA */
 vaadin-list-box {
     flex: 1 !important;
     height: 100vh !important;
@@ -183,6 +180,38 @@ vaadin-item[selected] {
     font-weight: 600;
 }
 
+vaadin-horizontal-layout .trade-item{
+    display: flex;
+    height: 7vh !important;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'Inter', sans-serif;
+}
+
+.trade-item:hover {
+    background-color: rgba(246, 100, 53, 0.35);
+    cursor: pointer;
+}
+
+.trade-label{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+}
+
+
+.trade-grade{
+    margin-right: 1.5rem;
+    background-color: green;
+    padding: 1rem;
+    border-radius: 100%;
+    font-weight: 1000;
+    font-size: 1.1rem;
+}
+
+
+/* LOADING SCREEN */
 .spinner {
     border: 6px solid #f3f3f3;
     border-top: 6px solid #F66435;
