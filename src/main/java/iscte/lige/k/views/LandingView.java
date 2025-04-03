@@ -2,41 +2,59 @@ package iscte.lige.k.views;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
+import iscte.lige.k.service.PropertiesLoader;
+
+import java.util.List;
+
 
 @Route("")
+@JsModule("./landing.js")
 public class LandingView extends VerticalLayout {
+    private PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();
 
     public LandingView() {
+        addClassName("landing-view");
         setSizeFull();
-        getStyle().set("background", "#0f1117");
 
+        // Título
         H1 titulo = new H1("Exploração de Terrenos");
-        titulo.getStyle()
-                .set("color", "#FFF1D0")
-                .set("margin", "2rem auto");
+        titulo.addClassName("titulo");
 
-        Button verGrafo = new Button("Ver Grafo por Freguesia", e ->
-                verGrafo());
+        // Dropdown
+        ComboBox<String> freguesiaDropdown = new ComboBox<>("Selecione freguesia");
+        List<String> options = propertiesLoader.getFreguesias();
+        options.add("Outras");
+        options.add("Todas");
+        freguesiaDropdown.setItems(options);
+        freguesiaDropdown.addClassName("dropdown-freguesia");
 
-        Button verMapa = new Button("Ver Mapa Geográfico", e ->
-                verMapa());
+        // Botão
+        Button verGrafo = new Button("Ver Trocas", e -> verGrafo(freguesiaDropdown.getValue()));
+        verGrafo.addClassName("botao-ver-grafo");
 
-        verGrafo.getStyle().set("margin", "1rem").set("background", "#F66435").set("color", "white");
-        verMapa.getStyle().set("margin", "1rem").set("background", "#F66435").set("color", "white");
+        // Zona dos elementos escondidos
+        Div escondido = new Div(freguesiaDropdown, verGrafo);
+        escondido.addClassName("conteudo-escondido");
 
-        add(titulo, verGrafo, verMapa);
-        setAlignItems(Alignment.CENTER);
-        setJustifyContentMode(JustifyContentMode.CENTER);
+        // Wrapper geral
+        Div container = new Div(titulo, escondido);
+        container.addClassName("conteudo-wrapper");
+
+        add(container);
+
+        // Ativar o listener no titulo
+        getElement().executeJs("window.activateTituloOnce && window.activateTituloOnce()");
     }
 
-    private void verGrafo() {
-        UI.getCurrent().navigate("Trades");
-    }
-
-    private void verMapa() {
-        UI.getCurrent().navigate("mapa");
+    private void verGrafo(String freguesia) {
+        if (freguesia != null && !freguesia.isEmpty()) {
+            UI.getCurrent().navigate("Trades?freguesia=" + freguesia);
+        }
     }
 }

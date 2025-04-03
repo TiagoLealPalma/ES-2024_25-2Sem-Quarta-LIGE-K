@@ -21,6 +21,9 @@ public class PropertiesLoader {
 
     public Map<Integer, Owner> owners = new HashMap<Integer, Owner>();
     private List<Property> properties = new ArrayList<Property>();
+    private Map<String, List<Property>> propertyMapByFreguesia = new HashMap<>();
+
+    private String freguesia = null;
 
     // On initialization, parse and calculate the data structures with the csv file
     // on src/main/resources
@@ -61,13 +64,21 @@ public class PropertiesLoader {
                     Double area = Double.parseDouble(data[3]);
                     Double price = Double.parseDouble(data[4]);
 
-                // Insert property data into struct
-                Property p = new Property(data[1], data[2], area, price, geometry,
-                        owner, data[7], data[8], data[9]);
+                    // Insert property data into struct
+                    Property p = new Property(data[1], data[2], area, price, geometry,
+                            owner, data[7], data[8], data[9]);
 
-                // Add property to properties list.
-                properties.add(p);
+                    // Add property to properties list.
+                    properties.add(p);
 
+                    // Add do dictionary <Freguesia, List<Property>>
+                    if (propertyMapByFreguesia.containsKey(data[7]))
+                        propertyMapByFreguesia.get(data[7]).add(p); // Adicionar no mapa da freguesia
+                    else {
+                        List<Property> list = new ArrayList<>();
+                        list.add(p);
+                        propertyMapByFreguesia.put(data[7], list);
+                    }
                 } catch (NumberFormatException e) {
                     System.err.println("Invalid number format in CSV: " + Arrays.toString(data));
                 }
@@ -143,7 +154,37 @@ public class PropertiesLoader {
         }
     }
 
-    public synchronized List<Property> getPropertiesWithNeighbours () {
+    public List<Property> getPropertiesWithNeighbours () {
+        checkLocked();
+
+        System.err.println("getneighwithneigh: " + freguesia);
+        List<Property> results = new ArrayList<>();
+
+        if(getFreguesias().contains(freguesia)) {
+            for (Property p : propertyMapByFreguesia.get(freguesia)) {
+                if (!p.getNeighbourProperties().isEmpty())
+                    results.add(p);
+            }
+        }else System.err.println("Freguesia nao foi reconhecida, ou outros ou todos: " + freguesia);
+        return results; // DEBUG, remover depois
+    }
+
+    public Map<String, List<Property>> getPropertyMapByFreguesia() { return propertyMapByFreguesia; }
+
+    public List<String> getFreguesias(){
+        checkLocked();
+
+        List<String> result = new ArrayList<>(propertyMapByFreguesia.keySet().stream().sorted().toList());
+        result.remove("NA");
+        return result;
+    }
+
+    public void setLoadingOptions(String freguesia){
+        checkLocked();
+        this.freguesia = freguesia;
+    }
+
+    private void checkLocked() {
         synchronized (this) {
             while (!loaded) {
                 try {
@@ -152,14 +193,8 @@ public class PropertiesLoader {
                     throw new RuntimeException(e);
                 }
             }
-        }
 
-        List<Property> results = new ArrayList<>();
-        for(Property p : properties){
-            if(!p.getNeighbourProperties().isEmpty())
-                results.add(p);
         }
-        return results.stream().limit(1000).toList(); // DEBUG, remover depois
     }
 
     public static synchronized PropertiesLoader getInstance(){
@@ -170,5 +205,12 @@ public class PropertiesLoader {
     }
 
 
+    public static void main(String[] args) {
+        PropertiesLoader p = new PropertiesLoader();
 
+        for (String s : p.getPropertyMapByFreguesia().keySet()) {
+            System.err.println(s);
+            System.err.println(p.getPropertyMapByFreguesia().get(s).size());
+        }
+    }
 }
