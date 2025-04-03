@@ -19,7 +19,7 @@ public class PropertiesLoader {
     private static PropertiesLoader instance = null;
     private static boolean loaded = false;
 
-    private Map<Integer, Owner> owners = new HashMap<Integer, Owner>();
+    public Map<Integer, Owner> owners = new HashMap<Integer, Owner>();
     private List<Property> properties = new ArrayList<Property>();
     private Map<String, List<Property>> propertyMapByFreguesia = new HashMap<>();
 
@@ -107,7 +107,7 @@ public class PropertiesLoader {
 
             // Run through the list and connect properties which geometry touches
             connectNeighbours(index);
-            calculateAllAvgAreas();
+           // calculateAllAvgAreas();
 
             // Inform that the instance is fully loaded and safe to use
             synchronized (this) {
