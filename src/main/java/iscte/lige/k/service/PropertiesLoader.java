@@ -2,6 +2,7 @@ package iscte.lige.k.service;
 
 import iscte.lige.k.dataStructures.Owner;
 import iscte.lige.k.dataStructures.Property;
+import iscte.lige.k.dataStructures.Trade;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
@@ -22,8 +23,28 @@ public class PropertiesLoader {
     public Map<Integer, Owner> owners = new HashMap<Integer, Owner>();
     private List<Property> properties = new ArrayList<Property>();
     private Map<String, List<Property>> propertyMapByFreguesia = new HashMap<>();
+    private List<Trade> trades = new ArrayList<>();
 
     private String freguesia = null;
+
+    // Context bundle needed to load Trades page
+    public class TradesPageBundle {
+        private String freguesia;
+        private List<Property> properties;
+        private List<Trade> trades;
+
+        public TradesPageBundle(String freguesia, List<Property> properties, List<Trade> trades){
+            this.freguesia = freguesia;
+            this.properties = properties;
+            this.trades = trades;
+        }
+
+        public String getFreguesia() { return freguesia; }
+
+        public List<Property> getProperties() { return properties; }
+
+        public List<Trade> getTrades() { return trades; }
+    }
 
     // On initialization, parse and calculate the data structures with the csv file
     // on src/main/resources
@@ -107,6 +128,7 @@ public class PropertiesLoader {
 
             // Run through the list and connect properties which geometry touches
             connectNeighbours(index);
+            trades = TradeService_MR.getTradesList(owners.values().stream().toList());
            // calculateAllAvgAreas();
 
             // Inform that the instance is fully loaded and safe to use
@@ -157,17 +179,43 @@ public class PropertiesLoader {
     public List<Property> getPropertiesWithNeighbours () {
         checkLocked();
 
-        System.err.println("getneighwithneigh: " + freguesia);
-        List<Property> results = new ArrayList<>();
+        System.err.println("getneighwithneigh: " + freguesia); // DEBUG
+        List<Property> propertyList = new ArrayList<>();
 
         if(getFreguesias().contains(freguesia)) {
+            // Get properties
             for (Property p : propertyMapByFreguesia.get(freguesia)) {
                 if (!p.getNeighbourProperties().isEmpty())
-                    results.add(p);
+                    propertyList.add(p);
             }
-        }else System.err.println("Freguesia nao foi reconhecida, ou outros ou todos: " + freguesia);
-        return results; // DEBUG, remover depois
+        } else {
+            System.err.println("Freguesia nao foi reconhecida, ou outros ou todos: " + freguesia);
+            return null;
+        }
+
+        return propertyList; // DEBUG, remover depois
     }
+
+    public List<Trade> getTrades (String freguesia){
+        checkLocked();
+
+        List<Trade> filteredTrades = new ArrayList<>();
+
+        if(getFreguesias().contains(freguesia)) {
+            filteredTrades = trades.stream()
+                    .filter(t -> t.getOwner1Property().getFreguesia().equals(freguesia) &&
+                            t.getOwner2Property().getFreguesia().equals(freguesia))
+                    .toList();
+        } else {
+            System.err.println("Freguesia nao foi reconhecida, ou outros ou todos: " + freguesia);
+            return null;
+        }
+
+        return filteredTrades; // DEBUG, remover depois
+    }
+
+
+
 
     public Map<String, List<Property>> getPropertyMapByFreguesia() { return propertyMapByFreguesia; }
 

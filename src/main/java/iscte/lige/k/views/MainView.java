@@ -11,6 +11,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.Route;
+import iscte.lige.k.dataStructures.Trade;
 import iscte.lige.k.service.PropertiesLoader;
 import iscte.lige.k.service.TradeEval;
 
@@ -75,24 +76,18 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
         ListBox<HorizontalLayout> list = new ListBox<>();
 
         // DEBUGGING
-        String[][] trades = {
-                {"Terreno 1 <-> Terreno 3", "89"},
-                {"Terreno 2 <-> Terreno 6", "72"},
-                {"Terreno 5 <-> Terreno 9", "48"},
-                {"Terreno 7 <-> Terreno 10", "24"}
-        };
+        List<Trade> trades = propertiesLoader.getTrades(freguesia).stream().sorted().distinct().toList();
 
-        for (String[] trade : trades) {
+        for (Trade trade : trades) {
             HorizontalLayout row = new HorizontalLayout();
             row.addClassName("trade-item");
 
-            Span label = new Span(trade[0]);
+            Span label = new Span(trade.toString());
             label.addClassName("trade-label");
 
-            Span grade = new Span(trade[1]);
+            Span grade = new Span(String.valueOf(trade.getScore()));
             grade.addClassName("trade-grade");
-            System.out.println(TradeEval.IntToColor(Integer.parseInt(trade[1])));
-            grade.getStyle().set("background-color", TradeEval.IntToColor(Integer.parseInt(trade[1])));
+            grade.getStyle().set("background-color", TradeEval.IntToColor(trade.getScore()));
 
             row.add(label, grade);
             list.add(row);
