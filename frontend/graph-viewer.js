@@ -134,6 +134,10 @@ class GraphViewer extends HTMLElement {
             interaction: {
                 dragView: true,
                 zoomView: true
+            },
+            highlight: {
+                background: '#1ee304', // e.g. a strong yellow
+                border: '#cbcbcb'      // e.g. a bold black border
             }
         };
 
@@ -161,3 +165,43 @@ class GraphViewer extends HTMLElement {
 }
 
 customElements.define('graph-viewer', GraphViewer);
+
+// Hovering trades highlight
+document.addEventListener('DOMContentLoaded', () => {
+    const graphViewer = document.querySelector('graph-viewer');
+
+    // Defensive check
+    if (!graphViewer) {
+        console.warn("No <graph-viewer> found in the DOM.");
+        return;
+    }
+
+    const waitForNetwork = () => {
+        if (graphViewer.network) {
+            // Attach event listeners to all trade items
+            document.querySelectorAll('.trade-item').forEach(item => {
+                item.addEventListener('mouseover', () => {
+                    console.log("Entrei")
+                    const id1 = item.getAttribute('P1');
+                    const id2 = item.getAttribute('P2');
+
+                    if (id1 && id2) {
+                        graphViewer.network.selectNodes([id1, id2]);
+                        console.log("Selecionei")
+                    }
+                });
+
+                item.addEventListener('mouseout', () => {
+                    graphViewer.network.unselectAll();
+                    console.log("Desselecionei")
+                });
+            });
+
+        } else {
+            // Wait and try again
+            setTimeout(waitForNetwork, 100);
+        }
+    };
+
+    waitForNetwork();
+});

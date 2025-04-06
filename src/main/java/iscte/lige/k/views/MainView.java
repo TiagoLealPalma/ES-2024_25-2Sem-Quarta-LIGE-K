@@ -78,13 +78,19 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
         // DEBUGGING
         List<Trade> trades = propertiesLoader.getTrades(freguesia).stream().sorted().distinct().toList();
 
+        // Trades list
         for (Trade trade : trades) {
+            // Trade item
             HorizontalLayout row = new HorizontalLayout();
             row.addClassName("trade-item");
+            row.getElement().setAttribute("P1", trade.getOwner1Property().getParcelaId());
+            row.getElement().setAttribute("P2", trade.getOwner2Property().getParcelaId());
 
+            // Trade label
             Span label = new Span(trade.toString());
             label.addClassName("trade-label");
 
+            // Trade grade
             Span grade = new Span(String.valueOf(trade.getScore()));
             grade.addClassName("trade-grade");
             grade.getStyle().set("background-color", TradeEval.IntToColor(trade.getScore()));
