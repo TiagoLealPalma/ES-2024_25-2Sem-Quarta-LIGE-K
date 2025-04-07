@@ -98,8 +98,8 @@ class GraphViewer extends HTMLElement {
                     background: '#F66435',
                     border: '#F66435',
                     highlight: {
-                        background: '#FFF1D0',
-                        border: '#F66435',
+                        background: '#008000',
+                        border: '#FFF1D0',
                     }
                 },
                 font: {
@@ -139,25 +139,28 @@ class GraphViewer extends HTMLElement {
             },
         };
 
-        const data = {nodes, edges};
-        const network = new vis.Network(container, data, options);
-        const graphViewer = this;
+       this.data = {nodes, edges};
+       this.network = new vis.Network(container, this.data, options);
 
         // Event that signals the loading of the page (Can be used like OnStart())
-        network.once("stabilizationIterationsDone", () => {
-            network.setOptions({physics: false});
+        this.network.once("stabilizationIterationsDone", () => {
+            this.network.setOptions({physics: false});
 
 
             document.querySelectorAll('.trade-item').forEach(item => {
 
                 item.addEventListener('click', () => {
-                    network.unselectAll();
+                    console.log("Clicou numa troca");
+                    this.network.unselectAll();
                     console.log()
                     const id1 = item.getAttribute('P1');
                     const id2 = item.getAttribute('P2');
+                    const id1main = item.getAttribute('P1Main');
+                    const id2main = item.getAttribute('P2Main');
 
-                    if (id1 && id2) {
-                        network.selectNodes([id1, id2]);
+                    if (id1 && id2 && id1main && id2main) {
+                        this.mergeNodes(id1,id2main);
+                        this.mergeNodes(id2,id1main);
                     }
                 });
 
@@ -166,21 +169,12 @@ class GraphViewer extends HTMLElement {
                     const id2 = item.getAttribute('P2');
 
                     if (id1 && id2) {
-                        network.selectNodes([id1, id2]);
-                    }
-                });
-
-                item.addEventListener('mouseover', () => {
-                    const id1 = item.getAttribute('P1');
-                    const id2 = item.getAttribute('P2');
-
-                    if (id1 && id2) {
-                        network.selectNodes([id1, id2]);
+                        this.network.selectNodes([id1, id2]);
                     }
                 });
 
                 item.addEventListener('mouseout', () => {
-                    network.unselectAll();
+                    this.network.unselectAll();
                 });
             });
 
@@ -206,14 +200,89 @@ class GraphViewer extends HTMLElement {
     }
 
 
-    // Hovering trades highlight
-    activateTradeHoverListeners() {
+    mergeNodes(node1Id, node2Id) {
+        // Garante que a física está desligada para que possas animar
+        this.network.setOptions({ physics: false });
+
+        // Usa getPositions para garantir que tens posições fixas
+        const positions = this.network.getPositions([node1Id, node2Id]);
+
+        const node1 = {
+            ...this.data.nodes.get(node1Id),
+            ...positions[node1Id]
+        };
+        const node2 = {
+            ...this.data.nodes.get(node2Id),
+            ...positions[node2Id]
+        };
+
+        const targetX = (node1.x + node2.x) / 2;
+        const targetY = (node1.y + node2.y) / 2;
+
+        let steps = 30;
+        let currentStep = 0;
+
+        // Interpolation
+        const dx1 = (targetX - node1.x) / steps;
+        const dy1 = (targetY - node1.y) / steps;
+        const dx2 = (targetX - node2.x) / steps;
+        const dy2 = (targetY - node2.y) / steps;
+
+        const interval = setInterval(() => {
+            currentStep++;
+
+            this.data.nodes.update([
+                { id: node1Id, x: node1.x + dx1 * currentStep, y: node1.y + dy1 * currentStep, fixed: true },
+                { id: node2Id, x: node2.x + dx2 * currentStep, y: node2.y + dy2 * currentStep, fixed: true }
+            ]);
+
+            this.network.redraw();
+
+            if (currentStep >= steps) {
+                clearInterval(interval);
 
 
-        console.log("Entrei em cima");
+                const area1 = Math.exp(node1.value);
+                const area2 = Math.exp(node2.value);
+                const mergedArea = area1 + area2;
+                const mergedValue = Math.log(mergedArea);
+                console.log(node1.label);
+                console.log(node2.label);
 
+                const mergedNodeId = `merged_${node1Id}_${node2Id}`;
+                this.data.nodes.add({
+                    id: mergedNodeId,
+                    value: mergedValue,
+                    label: node2.label,
+                    title: (node1.title || '') + "\n\n" + (node2.title || ''),
+                    x: targetX,
+                    y: targetY,
+                    fixed: true
+                });
 
+                this.data.edges.forEach(edge => {
+                    if (edge.from === node1Id || edge.from === node2Id) {
+                        this.data.edges.update({ id: edge.id, from: mergedNodeId });
+                    }
+                    if (edge.to === node1Id || edge.to === node2Id) {
+                        this.data.edges.update({ id: edge.id, to: mergedNodeId });
+                    }
+                });
+
+                // Remover arestas que agora ligam o nó a si próprio
+                this.data.edges.forEach(edge => {
+                    if (edge.from === edge.to) {
+                        this.data.edges.remove({ id: edge.id });
+                    }
+                });
+
+                this.data.nodes.remove([node1Id, node2Id]);
+                this.network.redraw();
+            }
+        }, 15);
     }
+
+
 }
 customElements.define('graph-viewer', GraphViewer);
 

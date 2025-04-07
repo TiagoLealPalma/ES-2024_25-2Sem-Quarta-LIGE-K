@@ -83,8 +83,14 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
             // Trade item
             HorizontalLayout row = new HorizontalLayout();
             row.addClassName("trade-item");
+
+            // Attributes for P1
             row.getElement().setAttribute("P1", trade.getOwner1Property().getParcelaId());
+            row.getElement().setAttribute("P1Main", trade.getOwner1MainProperty().getParcelaId());
+
+            // Attributes for P2
             row.getElement().setAttribute("P2", trade.getOwner2Property().getParcelaId());
+            row.getElement().setAttribute("P2Main", trade.getOwner2MainProperty().getParcelaId());
 
             // Trade label
             Span label = new Span(trade.toString());

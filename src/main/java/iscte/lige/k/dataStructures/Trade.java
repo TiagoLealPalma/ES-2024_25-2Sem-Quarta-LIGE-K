@@ -9,6 +9,8 @@ public class Trade implements Comparable<Trade> {
     private Owner owner2;
     private Property owner1Property;
     private Property owner2Property;
+    private Property owner1MainProperty; // Property that's being merged with the owner 2 property when traded
+    private Property owner2MainProperty; // Property that's being merged with the owner 2 property when traded
 
     private int score = -1;
 
@@ -21,6 +23,22 @@ public class Trade implements Comparable<Trade> {
         this.owner2Property = p2;
         this.totalAreaBeingTraded = p1.getArea() + p2.getArea();
         TradeEval.evaluateTrade(this);
+        this.owner1MainProperty = findMainProperty(owner1, p2);
+        this.owner2MainProperty = findMainProperty(owner2, p1);
+
+        if(owner1MainProperty == null || owner2MainProperty == null || owner1Property == owner2MainProperty || owner2Property == owner1MainProperty) {
+            throw new IllegalStateException("No main property found: " +
+                    "Owner1MainProperty = " + owner1MainProperty +
+                    ", Owner2MainProperty = " + owner2MainProperty);
+        }
+    }
+
+    private Property findMainProperty(Owner ownerGettingTheProperty, Property propertyGettingMerged) {
+        for (Property property : propertyGettingMerged.neighbourProperties){
+            if (property.getOwner().equals(ownerGettingTheProperty))
+                return property;
+        }
+        return null;
     }
 
     public void setScore(int score) {
@@ -101,10 +119,16 @@ public class Trade implements Comparable<Trade> {
         return totalAreaBeingTraded;
     }
 
+    public Property getOwner1MainProperty() { return owner1MainProperty; }
+
+    public Property getOwner2MainProperty() { return owner2MainProperty; }
+
     @Override
     public String toString() {
         return  owner1.getName() + ": " + owner1Property.getParcelaId()
                 + " <-> " +
                 owner2.getName() + ": " + owner2Property.getParcelaId();
     }
+
+
 }
