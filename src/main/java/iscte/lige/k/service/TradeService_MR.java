@@ -9,7 +9,7 @@ import java.util.*;
 public class TradeService_MR {
     public PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();
 
-    private static int howMany (Owner owner, Owner otherOwner) { // Quantas vezes são eles vizinhos
+    private static int countNeighbouringRelations(Owner owner, Owner otherOwner) { // Quantas vezes são eles vizinhos
         int count = 0;
         for(Property property : owner.getProperties()) {
             for(Property otherProperty : otherOwner.getProperties()) {
@@ -27,7 +27,9 @@ public class TradeService_MR {
         for (Property property : owner.getProperties()) {
             for (Property otherProperty : otherOwner.getProperties()) {
                 if (property.getNeighbourProperties().contains(otherProperty)) {
-                    list.add(property);
+                    if(!list.contains(property)) list.add(property);
+                    list.add(otherProperty);
+
                 }
             }
         }
@@ -40,28 +42,34 @@ public class TradeService_MR {
 
     public static List<Trade> getTradesList(List<Owner> owners) {
         List<Trade> trades = new ArrayList<>();
-        Set<Trade> tradeSet = new HashSet<>(); // Para evitar duplicatas
-        int id = 0;
+        Set<Trade> tradeSet = new HashSet<>(); // Used for duplicate avoidance
 
         for (Owner owner : owners) {
             for (Owner otherOwner : owners) {
-                if (owner.getName().equals(otherOwner.getName())) continue; // Agora só compara donos diferentes
+                if (owner.getName().equals(otherOwner.getName())) // Stops self comparison
+                    continue;
 
-                if (howMany(owner, otherOwner) > 1) { // Só entra se houver mais de um ponto de contato
-                    for (Property property : getNeighbourProperties(owner, otherOwner)) {
-                        for (Property otherProperty : getNeighbourProperties(otherOwner, owner)) {
+                if (countNeighbouringRelations(owner, otherOwner) < 2)  // Needs two relationships to be eligible for a trade
+                    continue;
 
-                            if (!property.getOwner().getName().equals(otherProperty.getOwner().getName())) {
-                                Trade newTrade = new Trade(owner, otherOwner, property, otherProperty, id);
-                                if (tradeSet.add(newTrade)) { // Adiciona ao HashSet e verifica duplicatas
-                                    TradeEval.evaluateTrade(newTrade);
-                                    trades.add(newTrade);
-                                    id++;
-                                }
-                            }
+                // Look for the trade
+                List<Property> neighbouringProperties = getNeighbourProperties(owner, otherOwner);
+                for (Property property : neighbouringProperties) {
+                    for (Property otherProperty : neighbouringProperties) {
+
+                        if (property.getOwner().getName().equals(otherProperty.getOwner().getName()))
+                            continue; // Cant trade properties that share the same owner
+                        if (property.getNeighbourProperties().contains(otherProperty))
+                            continue; // No point trading properties that are neighbours of eachother (Corner case 4 properties in a row alternating needs handling)
+
+                        Trade newTrade = new Trade(property.getOwner(), otherProperty.getOwner(), property, otherProperty);
+                        if (tradeSet.add(newTrade)) { // Adiciona ao HashSet e verifica duplicatas
+                            trades.add(newTrade);
                         }
+
                     }
                 }
+
             }
         }
         return trades;

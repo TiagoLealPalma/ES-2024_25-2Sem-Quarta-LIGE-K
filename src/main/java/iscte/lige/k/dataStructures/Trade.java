@@ -1,5 +1,7 @@
 package iscte.lige.k.dataStructures;
 
+import iscte.lige.k.service.TradeEval;
+
 import java.util.Objects;
 
 public class Trade implements Comparable<Trade> {
@@ -8,18 +10,17 @@ public class Trade implements Comparable<Trade> {
     private Property owner1Property;
     private Property owner2Property;
 
-    private int tradeId;
     private int score = -1;
 
     private double totalAreaBeingTraded;
 
-    public Trade(Owner owner1, Owner owner2, Property p1, Property p2, int tradeId) {
+    public Trade(Owner owner1, Owner owner2, Property p1, Property p2) {
         this.owner1 = owner1;
         this.owner2 = owner2;
         this.owner1Property = p1;
         this.owner2Property = p2;
-        this.tradeId = tradeId;
         this.totalAreaBeingTraded = p1.getArea() + p2.getArea();
+        TradeEval.evaluateTrade(this);
     }
 
     public void setScore(int score) {
@@ -94,10 +95,6 @@ public class Trade implements Comparable<Trade> {
 
     public Property getOwner2Property() {
         return owner2Property;
-    }
-
-    public int getTradeId() {
-        return tradeId;
     }
 
     public double getTotalAreaBeingTraded() {

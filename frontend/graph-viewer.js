@@ -18,6 +18,8 @@ class GraphViewer extends HTMLElement {
             return;
         }
         console.log("GraphViewer component connected to DOM");
+        console.log("typeof this.setListeners =", typeof this.setListeners);
+
 
         this.style.height = "100%";
         this.style.width = "100%";
@@ -39,7 +41,7 @@ class GraphViewer extends HTMLElement {
         if (initialRawData) {
             console.log("graphData was already present. Parsing immediately...");
             this.tryBuildGraph(initialRawData, container);
-        }else console.log("No data in attribute!!!!!!")
+        } else console.log("No data in attribute!!!!!!")
 
         // Redundancy in case observer doesn't work
         this.lastGraphData = null;
@@ -135,24 +137,64 @@ class GraphViewer extends HTMLElement {
                 dragView: true,
                 zoomView: true
             },
-            highlight: {
-                background: '#1ee304', // e.g. a strong yellow
-                border: '#cbcbcb'      // e.g. a bold black border
-            }
         };
 
-        const data = { nodes, edges };
+        const data = {nodes, edges};
         const network = new vis.Network(container, data, options);
+        const graphViewer = this;
 
+        // Event that signals the loading of the page (Can be used like OnStart())
         network.once("stabilizationIterationsDone", () => {
-            network.setOptions({ physics: false });
-            console.log("Physics disabled after stabilization");
+            network.setOptions({physics: false});
 
+
+            document.querySelectorAll('.trade-item').forEach(item => {
+
+                item.addEventListener('click', () => {
+                    network.unselectAll();
+                    console.log()
+                    const id1 = item.getAttribute('P1');
+                    const id2 = item.getAttribute('P2');
+
+                    if (id1 && id2) {
+                        network.selectNodes([id1, id2]);
+                    }
+                });
+
+                item.addEventListener('mouseover', () => {
+                    const id1 = item.getAttribute('P1');
+                    const id2 = item.getAttribute('P2');
+
+                    if (id1 && id2) {
+                        network.selectNodes([id1, id2]);
+                    }
+                });
+
+                item.addEventListener('mouseover', () => {
+                    const id1 = item.getAttribute('P1');
+                    const id2 = item.getAttribute('P2');
+
+                    if (id1 && id2) {
+                        network.selectNodes([id1, id2]);
+                    }
+                });
+
+                item.addEventListener('mouseout', () => {
+                    network.unselectAll();
+                });
+            });
+
+            console.log("Physics disabled after stabilization");
             if (typeof this.$server !== 'undefined') {
                 this.$server.graphFinishedLoading();
             }
 
+
+
+
         });
+
+
     }
 
     set graphData(value) {
@@ -162,46 +204,16 @@ class GraphViewer extends HTMLElement {
     get graphData() {
         return this.getAttribute('graphData');
     }
-}
 
+
+    // Hovering trades highlight
+    activateTradeHoverListeners() {
+
+
+        console.log("Entrei em cima");
+
+
+    }
+}
 customElements.define('graph-viewer', GraphViewer);
 
-// Hovering trades highlight
-document.addEventListener('DOMContentLoaded', () => {
-    const graphViewer = document.querySelector('graph-viewer');
-
-    // Defensive check
-    if (!graphViewer) {
-        console.warn("No <graph-viewer> found in the DOM.");
-        return;
-    }
-
-    const waitForNetwork = () => {
-        if (graphViewer.network) {
-            // Attach event listeners to all trade items
-            document.querySelectorAll('.trade-item').forEach(item => {
-                item.addEventListener('mouseover', () => {
-                    console.log("Entrei")
-                    const id1 = item.getAttribute('P1');
-                    const id2 = item.getAttribute('P2');
-
-                    if (id1 && id2) {
-                        graphViewer.network.selectNodes([id1, id2]);
-                        console.log("Selecionei")
-                    }
-                });
-
-                item.addEventListener('mouseout', () => {
-                    graphViewer.network.unselectAll();
-                    console.log("Desselecionei")
-                });
-            });
-
-        } else {
-            // Wait and try again
-            setTimeout(waitForNetwork, 100);
-        }
-    };
-
-    waitForNetwork();
-});

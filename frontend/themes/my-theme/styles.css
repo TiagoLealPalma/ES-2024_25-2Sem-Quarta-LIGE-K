@@ -175,6 +175,10 @@ vaadin-item:hover {
     transform: scale(1.02);
 }
 
+
+
+
+
 vaadin-item[selected] {
     background-color: rgba(246, 100, 53, 0.25);
     font-weight: 600;
@@ -189,6 +193,16 @@ vaadin-horizontal-layout .trade-item{
 }
 
 .trade-item:hover {
+    background-color: rgba(246, 100, 53, 0.35);
+    cursor: pointer;
+}
+
+.trade-item:active {
+    background-color: rgba(246, 100, 53, 0.35);
+    cursor: pointer;
+}
+
+.trade-item:focus {
     background-color: rgba(246, 100, 53, 0.35);
     cursor: pointer;
 }
