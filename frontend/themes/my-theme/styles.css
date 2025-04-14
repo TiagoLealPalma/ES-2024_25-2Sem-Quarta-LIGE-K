@@ -23,6 +23,74 @@ html, body {
     color: rgb(255, 241, 208);
 }
 
+/* NEW LANDING PAGE */
+
+.titulo1{
+    position: absolute;
+    top: 2rem;
+    font-size: 4rem;
+    font-weight: bolder;
+    color: #F66435;
+}
+
+.landing-graph-area{
+    height: 300px;
+    width: 90vw;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.5fr 3fr 1fr;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.landing-graph-area img{
+    grid-row: 1;
+    grid-column: 2;
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.filters{
+    width: 80vw;
+    display: flex;
+    flex-direction: row;
+}
+
+.filters label{
+    color: #F66435!important;
+}
+
+.dropdown-ilha{
+    width: 40%;
+    padding: 0.5rem;
+    background-color: #0f1117;
+    color: #FFF1D0 !important;
+    border: 1px #F66435;
+}
+
+.dropdown-concelho{
+    width: 40%;
+    padding: 0.5rem;
+    background-color: #0f1117;
+    color: #FFF1D0 !important;
+    border: 1px #F66435;
+}
+
+.dropdown-freguesia{
+    border: 1px #F66435;
+
+}
+
+
+
+
+
+
+
 /* LANDING PAGE */
 
 .landing-view {

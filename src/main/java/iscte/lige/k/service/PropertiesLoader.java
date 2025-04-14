@@ -2,6 +2,7 @@ package iscte.lige.k.service;
 
 import iscte.lige.k.dataStructures.Owner;
 import iscte.lige.k.dataStructures.Property;
+import iscte.lige.k.dataStructures.SimplerProperty;
 import iscte.lige.k.dataStructures.Trade;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
@@ -22,8 +23,14 @@ public class PropertiesLoader {
 
     public Map<Integer, Owner> owners = new HashMap<Integer, Owner>();
     private List<Property> properties = new ArrayList<Property>();
+    private List<SimplerProperty> simplerProperties = new ArrayList<>();
     private Map<String, List<Property>> propertyMapByFreguesia = new HashMap<>();
     private List<Trade> trades = new ArrayList<>();
+
+    private List<String> freguesias = new ArrayList<>();
+    private List<String> munincipios = new ArrayList<>();
+    private List<String> ilhas = new ArrayList<>();
+    private Map<String, List<String>> mapMunicipioToFreguesia = new HashMap<>();
 
     private String freguesia = null;
 
@@ -73,6 +80,16 @@ public class PropertiesLoader {
 
                 // Convert to Geometry so the neighbours can be found
                 Geometry geometry = reader.read(data[5]);
+
+                // Check for new freguesia, munincipios e ilhas
+                if(!freguesias.contains(data[7])) freguesias.add(data[7]);
+                if(!munincipios.contains(data[8])) munincipios.add(data[8]);
+                if(!ilhas.contains(data[9])) ilhas.add(data[9]);
+
+                mapMunicipioToFreguesia.computeIfAbsent(data[8], k -> new ArrayList<>());
+                if(!mapMunicipioToFreguesia.get(data[8]).contains(data[7]))
+                    mapMunicipioToFreguesia.get(data[8]).add(data[7]);
+
 
                 // Check if the Owner is already present in the list
                 Owner owner = owners.get(Integer.parseInt(data[6]));
@@ -129,7 +146,10 @@ public class PropertiesLoader {
             // Run through the list and connect properties which geometry touches
             connectNeighbours(index);
             trades = TradeService_MR.getTradesList(owners.values().stream().toList());
+            buildSimplerProperties();
            // calculateAllAvgAreas();
+            System.err.print("Building SVGs");
+            //buildSVG();
 
             // Inform that the instance is fully loaded and safe to use
             synchronized (this) {
@@ -140,8 +160,25 @@ public class PropertiesLoader {
 
         } catch (ParseException | FileNotFoundException e) {
             System.err.println("Error parsing geometry: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
+
+    private void buildSVG() throws Exception {
+        // Exemplo de acesso:
+        // Para cada município, acede a todas as freguesias e vai buscar os dados no mapa principal
+        List<SimplerProperty> properties = getSimplerProperties();
+        SVGGenerator.exportPropertiesToSVG(properties,"null","null");
+        for (String municipio : mapMunicipioToFreguesia.keySet()) {
+            // Case municipio selection, freguesia null
+            SVGGenerator.exportPropertiesToSVG(properties,municipio,"null");
+            for (String freguesia : mapMunicipioToFreguesia.get(municipio)) {
+                SVGGenerator.exportPropertiesToSVG(properties,municipio,freguesia); // LEMBRAR NO FINAL DE FAZER PARA FREGUESIA NULA
+            }
+        }
+    }
+
 
     private void calculateAllAvgAreas() {
         for (Owner o : owners.values()){
@@ -232,6 +269,16 @@ public class PropertiesLoader {
         this.freguesia = freguesia;
     }
 
+    public void buildSimplerProperties(){
+        System.err.println("Building simpler versions of properties");
+        for (Property property : properties){
+            if(!property.getGeometry().isValid() || property.getGeometry().isEmpty())
+                continue;
+            SimplerProperty p = new SimplerProperty(property);
+            simplerProperties.add(p);
+        }
+    }
+
     private void checkLocked() {
         synchronized (this) {
             while (!loaded) {
@@ -252,13 +299,29 @@ public class PropertiesLoader {
         return instance;
     }
 
+    public List<String> getMunincipios() {
+        checkLocked();
+        return munincipios;
+    }
+
+    public List<String> getIlhas() {
+        checkLocked();
+        return ilhas;
+    }
+
+    public List<String> getFreguesiasUnfiltered() {
+        checkLocked();
+        return freguesias;
+    }
+
+    public List<SimplerProperty> getSimplerProperties() {
+        return simplerProperties.stream()
+                .filter(t -> (!(Double.parseDouble(t.getEntryNumber().substring(0,5).replace(",", ".")) > 3.5)))
+                .toList(); // Filters porto santo
+    }
 
     public static void main(String[] args) {
         PropertiesLoader p = new PropertiesLoader();
 
-        for (String s : p.getPropertyMapByFreguesia().keySet()) {
-            System.err.println(s);
-            System.err.println(p.getPropertyMapByFreguesia().get(s).size());
-        }
     }
 }
