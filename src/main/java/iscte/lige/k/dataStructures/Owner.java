@@ -62,7 +62,7 @@ public class Owner {
             // Verificar se propriedade ja faz parte de um grupo unido
             Area areaToEvaluate = null;
             for(Area area : jointProperties){ // Se sim, pega nessa grupo e avalia
-                if(area.parcelas.contains(properties.get(i).parcelaId)) {
+                if(area.parcelas.contains(properties.get(i).getParcelaId())) {
                     areaToEvaluate = area;
                     //notUnique.add(i);
                 }

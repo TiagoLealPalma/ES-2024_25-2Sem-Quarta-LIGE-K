@@ -34,7 +34,7 @@ public class Trade implements Comparable<Trade> {
     }
 
     private Property findMainProperty(Owner ownerGettingTheProperty, Property propertyGettingMerged) {
-        for (Property property : propertyGettingMerged.neighbourProperties){
+        for (Property property : propertyGettingMerged.getNeighbourProperties()){
             if (property.getOwner().equals(ownerGettingTheProperty))
                 return property;
         }
@@ -72,17 +72,12 @@ public class Trade implements Comparable<Trade> {
         int parcel2 = (int)Double.parseDouble(owner2Property.getParcelaId());
 
         return Objects.hash(
-                owner1.getName(),
-                owner2.getName(),
                 Math.min(parcel1, parcel2),
                 Math.max(parcel1, parcel2));
     }
 
     @Override
     public int compareTo(Trade otherTrade) {
-        if (this.score == -1 || otherTrade.getScore() == -1)
-            throw new IllegalStateException("Cannot compare trades that haven't been" +
-                    " assigned a score");
 
         if (this.score == otherTrade.getScore()) { // Tiebreaker
             return -(Double.compare(this.totalAreaBeingTraded, otherTrade.getTotalArea()));

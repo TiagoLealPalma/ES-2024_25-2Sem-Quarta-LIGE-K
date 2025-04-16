@@ -71,7 +71,7 @@ public class GraphViewerComponent extends Div {
                 node.addProperty("value", (int) Math.log(p.getArea())); // este valor será usado para calcular o tamanho
 
                 // Info that appears whenever the node is hovered
-                node.addProperty("title", "Parcela: " + p.getParcelaId() + "\nÁrea: " + p.getArea() + " m²\nFreguesia: " + p.getFreguesia());
+                node.addProperty("title", "Parcela: " + p.getParcelaId() + "\nÁrea: " + p.getArea() + " m²\nFreguesia: " + p.getParish());
                 nodes.add(node);
             } else
                 System.err.println("DEBUG: Erro na construção de nodes (Propriedades duplicadas)");

@@ -36,8 +36,8 @@ public class SVGGenerator {
 
             boolean pertenceFiltro =
                     (munincipio == "null" && freguesia == "null") ||
-                            (freguesia == "null" && p.getMunincipio().contains(munincipio)) ||
-                            p.getFreguesia().contains(freguesia);
+                            (freguesia == "null" && p.getCounty().contains(munincipio)) ||
+                            p.getParish().contains(freguesia);
 
             if (pertenceFiltro) {
                 // Brilho leve antes do ponto principal

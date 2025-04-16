@@ -36,7 +36,7 @@ public class PropertiesLoader {
     private Map<String, List<Property>> propertiesByCounty = new HashMap<>();
     private Map<String, List<Property>> propertiesByIsland = new HashMap<>();
 
-    private Map<String, List<String>> mapMunicipioToFreguesia = new HashMap<>();
+    private Map<String, List<String>> mapCountyToParish = new HashMap<>();
     private List<Trade> trades = new ArrayList<>();
 
     // loadingOptions[0] = criteria  && loadingOptions[1] = value
@@ -127,11 +127,11 @@ public class PropertiesLoader {
                 if (!counties.contains(data[8])) counties.add(data[8]);
                 if (!islands.contains(data[9])) islands.add(data[9]);
 
-                mapMunicipioToFreguesia.computeIfAbsent(data[8], k -> new ArrayList<>());
-                if (!mapMunicipioToFreguesia.get(data[8]).contains(data[7]))
-                    mapMunicipioToFreguesia.get(data[8]).add(data[7]);
+                mapCountyToParish.computeIfAbsent(data[8], k -> new ArrayList<>());
+                if (!mapCountyToParish.get(data[8]).contains(data[7]))
+                    mapCountyToParish.get(data[8]).add(data[7]);
 
-                // Add do dictionary <Freguesia, List<Property>>
+                // Add do dictionary <Parish, List<Property>>
                 if (propertiesByParish.containsKey(data[7]))
                     propertiesByParish.get(data[7]).add(p); // Adicionar no mapa da freguesia
                 else {
@@ -151,10 +151,10 @@ public class PropertiesLoader {
         // Para cada município, acede a todas as freguesias e vai buscar os dados no mapa principal
         List<SimplerProperty> properties = getSimplerProperties();
         SVGGenerator.exportPropertiesToSVG(properties,"null","null");
-        for (String municipio : mapMunicipioToFreguesia.keySet()) {
+        for (String municipio : mapCountyToParish.keySet()) {
             // Case municipio selection, freguesia null
             SVGGenerator.exportPropertiesToSVG(properties,municipio,"null");
-            for (String freguesia : mapMunicipioToFreguesia.get(municipio)) {
+            for (String freguesia : mapCountyToParish.get(municipio)) {
                 SVGGenerator.exportPropertiesToSVG(properties,municipio,freguesia); // LEMBRAR NO FINAL DE FAZER PARA FREGUESIA NULA
             }
         }
@@ -229,18 +229,18 @@ public class PropertiesLoader {
 
         List<Trade> filteredTrades = switch (criteria) {
             case "ilha" -> trades.stream()
-                    .filter(t -> t.getOwner1Property().getIlha().equals(value) &&
-                            t.getOwner2Property().getIlha().equals(value))
+                    .filter(t -> t.getOwner1Property().getIsland().equals(value) &&
+                            t.getOwner2Property().getIsland().equals(value))
                     .toList();
 
             case "concelho" -> trades.stream()
-                    .filter(t -> t.getOwner1Property().getMunicipio().equals(value) &&
-                            t.getOwner2Property().getMunicipio().equals(value))
+                    .filter(t -> t.getOwner1Property().getCounty().equals(value) &&
+                            t.getOwner2Property().getCounty().equals(value))
                     .toList();
 
             case "freguesia" -> trades.stream()
-                    .filter(t -> t.getOwner1Property().getFreguesia().equals(value) &&
-                            t.getOwner2Property().getFreguesia().equals(value))
+                    .filter(t -> t.getOwner1Property().getParish().equals(value) &&
+                            t.getOwner2Property().getParish().equals(value))
                     .toList();
 
             default -> null;

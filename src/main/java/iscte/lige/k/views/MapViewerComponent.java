@@ -38,7 +38,7 @@ public class MapViewerComponent extends Div {
             feature.add("coordinates", coordinates);
             feature.addProperty("owner", p.getOwner().getName());
             feature.addProperty("area", p.getArea());
-            feature.addProperty("freguesia", p.getFreguesia());
+            feature.addProperty("freguesia", p.getParish());
             jsonFeatures.add(feature);
         }
 

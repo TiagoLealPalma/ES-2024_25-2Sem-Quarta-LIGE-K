@@ -7,35 +7,35 @@ import java.util.List;
 
 public class Property {
     // Identifiers
-    String parcelaId;
-    String parcelaNum;
+    private final String parcelaId;
+    private final String parcelaNum;
 
     // Geometric data
-    Geometry geometry;
-    double area;
-    double perimeter;
+    private final Geometry geometry;
+    private final double area;
+    private final double perimeter;
 
     // Location data
-    String freguesia;
-    String municipio;
-    String ilha;
+    private final String parish;
+    private final String county;
+    private final String island;
 
-    Owner owner;
-    List<Property> neighbourProperties;
+    private final Owner owner;
+    private final List<Property> neighbourProperties;
 
     public Property(String parcelaId, String parcelaNum, double perimeter, double area,
-                    Geometry geometry, Owner owner, String freguesia, String municipio, String ilha) {
+                    Geometry geometry, Owner owner, String parish, String county, String island) {
 
-        // Properties atributes
+        // Properties attributes
         this.parcelaId = parcelaId;
         this.parcelaNum = parcelaNum;
         this.perimeter = perimeter;
         this.area = area;
         this.geometry = geometry;
         this.owner = owner;
-        this.freguesia = freguesia;
-        this.municipio = municipio;
-        this.ilha = ilha;
+        this.parish = parish;
+        this.county = county;
+        this.island = island;
         neighbourProperties = new ArrayList<>();
 
         // Update Owners info
@@ -69,13 +69,14 @@ public class Property {
 
     public double getPerimeter() { return perimeter; }
 
-    public String getFreguesia() { return freguesia; }
+    public String getParish() { return parish; }
 
-    public String getMunicipio() { return municipio; }
+    public String getCounty() { return county; }
 
-    public String getIlha() { return ilha; }
+    public String getIsland() { return island; }
 
     public Owner getOwner() { return owner; }
 
     public List<Property> getNeighbourProperties() { return neighbourProperties; }
+
 }
