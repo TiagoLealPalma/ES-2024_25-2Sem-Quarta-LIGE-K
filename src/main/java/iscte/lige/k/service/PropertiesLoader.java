@@ -36,12 +36,11 @@ public class PropertiesLoader {
     private Map<String, List<Property>> propertiesByCounty = new HashMap<>();
     private Map<String, List<Property>> propertiesByIsland = new HashMap<>();
 
-    private Map<String, List<String>> mapCountyToParish = new HashMap<>();
+    private Map<String, List<String>> mapMunicipioToFreguesia = new HashMap<>();
     private List<Trade> trades = new ArrayList<>();
 
     // loadingOptions[0] = criteria  && loadingOptions[1] = value
     private String[] loadingOptions = {"null","null"};  // i.e loadingOptions[0] = "freguesia" && loadingOptions[1] = "Fajã de Ovelha"
-
 
 
     private PropertiesLoader(){
@@ -127,22 +126,18 @@ public class PropertiesLoader {
                 if (!counties.contains(data[8])) counties.add(data[8]);
                 if (!islands.contains(data[9])) islands.add(data[9]);
 
-                mapCountyToParish.computeIfAbsent(data[8], k -> new ArrayList<>());
-                if (!mapCountyToParish.get(data[8]).contains(data[7]))
-                    mapCountyToParish.get(data[8]).add(data[7]);
+                mapMunicipioToFreguesia.computeIfAbsent(data[8], k -> new ArrayList<>());
+                if (!mapMunicipioToFreguesia.get(data[8]).contains(data[7]))
+                    mapMunicipioToFreguesia.get(data[8]).add(data[7]);
 
-                // Add do dictionary <Parish, List<Property>>
-                if (propertiesByParish.containsKey(data[7]))
-                    propertiesByParish.get(data[7]).add(p); // Adicionar no mapa da freguesia
-                else {
-                    List<Property> list = new ArrayList<>();
-                    list.add(p);
-                    propertiesByParish.put(data[7], list);
-                }
+                // Add do dictionary <Freguesia, List<Property>>
+                propertiesByParish.computeIfAbsent(data[7], k -> new ArrayList<>()).add(p);
+                propertiesByCounty.computeIfAbsent(data[8], k -> new ArrayList<>()).add(p);
+                propertiesByIsland.computeIfAbsent(data[9], k -> new ArrayList<>()).add(p);
 
             }
         } catch (NumberFormatException | ParseException | FileNotFoundException e) {
-            System.err.println("Error occurred while reading properties from csv" + e.getMessage());
+            throw new IllegalStateException("Something went wrong while initializing PropertiesLoader: " + e);
         }
     }
 
@@ -151,10 +146,10 @@ public class PropertiesLoader {
         // Para cada município, acede a todas as freguesias e vai buscar os dados no mapa principal
         List<SimplerProperty> properties = getSimplerProperties();
         SVGGenerator.exportPropertiesToSVG(properties,"null","null");
-        for (String municipio : mapCountyToParish.keySet()) {
+        for (String municipio : mapMunicipioToFreguesia.keySet()) {
             // Case municipio selection, freguesia null
             SVGGenerator.exportPropertiesToSVG(properties,municipio,"null");
-            for (String freguesia : mapCountyToParish.get(municipio)) {
+            for (String freguesia : mapMunicipioToFreguesia.get(municipio)) {
                 SVGGenerator.exportPropertiesToSVG(properties,municipio,freguesia); // LEMBRAR NO FINAL DE FAZER PARA FREGUESIA NULA
             }
         }
@@ -264,7 +259,7 @@ public class PropertiesLoader {
 
     public void setLoadingOptions(String[] options){
         checkLocked();
-        if(!"proprietariosfreguesiaconcelhoilha".toLowerCase().contains(options[0].toLowerCase()))
+        if(!"proprietariosfreguesiaconcelhoilha".toLowerCase().contains(options[0].toLowerCase())) // maybe change for a more predefined way
             throw new IllegalArgumentException("Criterio inserido não é valido.");
 
         this.loadingOptions = options;
