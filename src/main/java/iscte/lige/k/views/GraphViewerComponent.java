@@ -6,13 +6,11 @@ import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Div;
+import iscte.lige.k.dataStructures.Owner;
 import iscte.lige.k.service.PropertiesLoader;
 import iscte.lige.k.dataStructures.Property;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Tag("graph-viewer")
 @JsModule("./graph-viewer.js")
@@ -42,13 +40,20 @@ public class GraphViewerComponent extends Div {
     public void startLoadingOnServer() {
         System.err.println("Data requested from client. Loading graph...");
         PropertiesLoader loader = PropertiesLoader.getInstance();
-        JsonObject json = buildGraphData(loader.getPropertiesWithNeighbours());
+        JsonObject json = null;
+        if (loader.getLoadingOptions()[0] == "Proprietarios")
+            json = buildGraphData(loader.getOwners(), loader.getOwnerRelationships());
+        else json = buildGraphData(loader.getPropertiesWithNeighbours());
         System.err.println("Sending graph to JS...");
         getElement().setAttribute("graphData", json.toString());
 
     }
 
     public JsonObject buildGraphData(List<Property> properties) {
+        if (properties == null || properties.isEmpty()) {
+            throw new IllegalArgumentException("List of properties is null or empty");
+        }
+
         JsonArray nodes = new JsonArray();
         JsonArray edges = new JsonArray();
         Set<String> addedNodes = new HashSet<>();
@@ -110,4 +115,67 @@ public class GraphViewerComponent extends Div {
 
         return graph;
     }
+
+    public JsonObject buildGraphData(Map<Integer, Owner> owners, HashMap<Owner, Map<Owner, Integer>> relations) {
+
+        JsonArray nodes = new JsonArray();
+        JsonArray edges = new JsonArray();
+        Set<String> addedNodes = new HashSet<>();
+
+        System.err.println("\nCreating nodes... (" + owners.size() + " properties to evaluate, sorry for the delay :) )");
+        // Insert all nodes before checking connections
+        for (Integer identifier : owners.keySet()) {
+            String id = identifier.toString();
+
+            if (addedNodes.add(id)) {
+                JsonObject node = new JsonObject();
+                node.addProperty("id", id);
+                node.addProperty("label", id);
+
+
+                double avgArea = owners.get(identifier).calculateAvgArea();
+
+                node.addProperty("value", (int) Math.log(avgArea)); // este valor será usado para calcular o tamanho
+
+                // Info that appears whenever the node is hovered
+                node.addProperty("title", "Identificador: " + identifier + "\nÁrea Média: " + avgArea + " m²\nNº de Propriedades: " + owners.get(identifier).getNumOfProperties());
+                nodes.add(node);
+            } else
+                System.err.println("DEBUG: Erro na construção de nodes (Propriedades duplicadas)");
+        }
+
+        System.err.println("Creating edges...");
+        List<String> addedEdges = new ArrayList<>();
+        for (Owner owner : owners.values()) {
+            String id = owner.getName();
+            for (Owner otherOwner: relations.get(owner).keySet()) {
+                String otherId = otherOwner.getName();
+
+                if (addedNodes.add(otherId)) { // Se não foi inserida
+
+                    System.err.println("Algo de errado ocorreu a construir os owners, deveriam ter sido inseridos antes de chegarem aqui:" + otherId);
+                }
+
+                String edgeKey = id.compareTo(otherId) < 0 ? id + "-" + otherId : otherId + "-" + id;
+
+                // Verifies if it was already added, only adds if not
+                if (!addedEdges.contains(edgeKey)) {
+                    addedEdges.add(edgeKey);
+
+                    JsonObject edge = new JsonObject();
+                    edge.addProperty("from", id);
+                    edge.addProperty("to", otherId);
+
+                    edges.add(edge);
+                }
+            }
+        }
+
+        JsonObject graph = new JsonObject();
+        graph.add("nodes", nodes);
+        graph.add("edges", edges);
+
+        return graph;
+    }
+
 }

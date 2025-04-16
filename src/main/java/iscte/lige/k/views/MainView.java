@@ -34,19 +34,39 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
-        String freguesiaEncoded = event.getLocation()
+        String criteriaEncoded = event.getLocation()
                 .getQueryParameters()
                 .getParameters()
-                .getOrDefault("freguesia", List.of(""))
+                .getOrDefault("criteria", List.of(""))
                 .get(0);
 
-        String freguesia = URLDecoder.decode(freguesiaEncoded, StandardCharsets.UTF_8);
-        System.err.println("Freguesia recebida: " + freguesia);
+        String criteria = URLDecoder.decode(criteriaEncoded, StandardCharsets.UTF_8);
+        System.err.println("Critério recebido: " + criteria);
 
-        if (!freguesia.isBlank() && propertiesLoader.getFreguesias().contains(freguesia)) {
-            System.err.println("Loading graph for: " + freguesia);
-            propertiesLoader.setLoadingOptions(freguesia);
-            buildUI(freguesia);
+        if (criteria.contains("Proprietarios")){
+            System.err.println("Loading graph for: Proprietários");
+            propertiesLoader.setLoadingOptions(new String[]{"Proprietarios", "null"});
+            buildUI();
+            return;
+        }
+
+
+
+        // Se for de propriedades
+        String valueEncoded = event.getLocation()
+                .getQueryParameters()
+                .getParameters()
+                .getOrDefault(criteria, List.of(""))
+                .get(0);
+
+        String value = URLDecoder.decode(valueEncoded, StandardCharsets.UTF_8);
+        System.err.println("Critério recebido: " + value);
+
+
+        if (!value.isBlank() && propertiesLoader.getParishes().contains(value)) {
+            System.err.println("Loading graph for: " + value);
+            propertiesLoader.setLoadingOptions(new String[]{criteria, value});
+            buildUI(value);
         } else {
             removeAll();
             add(new H1("Freguesia não selecionada."));
@@ -76,7 +96,7 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
         ListBox<HorizontalLayout> list = new ListBox<>();
 
         // DEBUGGING
-        List<Trade> trades = propertiesLoader.getTrades(freguesia).stream().sorted().distinct().toList();
+        List<Trade> trades = propertiesLoader.getTrades().stream().sorted().distinct().toList();
 
         // Trades list
         for (Trade trade : trades) {
@@ -112,10 +132,35 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
         content.add(list);
 
 
+        // Add content to the page (graph will still be hidden until ready)
+        add(content);
 
+        // Show graph and hide loading screen when JS notifies that the graph is ready
+        graph.onGraphLoaded(() -> {
+            remove(loadingText, spinner);
+            content.getStyle().set("display", "flex");
+            loadingText.setVisible(false);
+            spinner.setVisible(false);
+            System.err.println("Graph was loaded, hiding loading screen");
+        });
+    }
 
+    // Used for proprietarios
+    private void buildUI() {
+        showLoadingScreen("");
 
+        // Prepare main content layout
+        content.setWidthFull();
+        content.setHeight("100vh");
+        content.setSpacing(true);
+        content.getStyle().set("display", "none"); // initially hidden until JS loads
 
+        // Create the graph viewer (must be in DOM early for JS to execute)
+        GraphViewerComponent graph = new GraphViewerComponent();
+        graph.setWidthFull();
+        graph.setHeightFull();
+        content.setFlexGrow(1, graph);
+        content.add(graph);
 
         // Add content to the page (graph will still be hidden until ready)
         add(content);
@@ -131,6 +176,7 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
     }
 
 
+    // Notificar do comprimento do que estiver ser loaded
     private void showLoadingScreen(String freguesia) {
 
         setSizeFull();

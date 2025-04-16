@@ -77,7 +77,7 @@ public class TradeService_MR {
 
     public static void main(String[] args) {
         TradeService_MR m = new TradeService_MR();
-        List<Trade> tradesList = m.getTradesList(m.propertiesLoader.owners.values().stream().toList());
+        List<Trade> tradesList = m.getTradesList(m.propertiesLoader.getOwners().values().stream().toList());
 
         if (!tradesList.isEmpty()) {
             System.out.println(tradesList.get(0)); // Imprime apenas a primeira trade

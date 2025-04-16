@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+
 
 :host {
     --lumo-base-color: #051014;
@@ -19,7 +20,7 @@ html, body {
     width: 100vw;
     overflow: hidden !important;
     background-color: #051014 !important;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     color: rgb(255, 241, 208);
 }
 
@@ -33,31 +34,56 @@ html, body {
     color: #F66435;
 }
 
-.landing-graph-area{
-    height: 300px;
+.landing-graph-area {
+    height: 800px;
     width: 90vw;
     position: relative;
-    display: grid;
     grid-template-columns: 1.5fr 3fr 1fr;
     justify-content: center;
     padding: 2rem;
+    margin: 6.5rem 4rem 0rem;
 }
 
-.landing-graph-area img{
+.landing-graph-area img {
     grid-row: 1;
     grid-column: 2;
     max-width: 100%;
-    width: 100%;
+    width: 100% !important;
     height: 100%;
     z-index: 1;
     opacity: 0;
     transition: opacity 1s ease-in-out;
+    margin-left: 25rem !important;
 }
 
-.filters{
+.graph-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: 100%;
+    width: 600px !important;
+    height: 100%;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    margin-left: 6rem !important;
+}
+
+.landing-criteria{
+    height: 30vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+.filters {
     width: 80vw;
     display: flex;
     flex-direction: row;
+    height: 10vh;
+    align-items: center;
+    cursor: pointer;
 }
 
 .filters label{
@@ -85,7 +111,31 @@ html, body {
 
 }
 
+.botao-ver-grafo1 {
 
+    margin-top: 1rem;
+    background-color: #101621;
+    color: #F66435;
+    border: none;
+    padding: 0.7rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 80%!important;
+    transition: all 0.3s ease-in-out;
+}
+
+.botao-ver-grafo1:hover {
+    color: white;
+    background-color: #F66435;
+    transform: translateY(-5px);
+}
+
+.prop-link{
+    color: #F66435;
+    text-decoration: underline;
+    font-size: 0.6rem;
+    font-stretch: extra-expanded;
+}
 
 
 

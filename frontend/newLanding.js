@@ -1,9 +1,47 @@
 console.log("newLanding.js carregado");
 
-// 🟡 Objeto para guardar imagens pré-carregadas
+// Objeto para guardar imagens pré-carregadas
 const preloadedImages = {};
 
-// 🔁 Função que pré-carrega imagens para cache
+// Pair da freguesia com o concelho
+const freguesiaToConcelho = {
+    "Arco da Calheta": "Calheta",
+    "Calheta": "Calheta",
+    "Estreito da Calheta": "Calheta",
+    "Fajã da Ovelha": "Calheta",
+    "Jardim do Mar": "Calheta",
+    "Paul do Mar": "Calheta",
+    "Ponta do Pargo": "Calheta",
+    "Prazeres": "Calheta",
+    "Câmara de Lobos": "Câmara de Lobos",
+    "Curral das Freiras": "Câmara de Lobos",
+    "Estreito de Câmara de Lobos": "Câmara de Lobos",
+    "Jardim da Serra": "Câmara de Lobos",
+    "Quinta Grande": "Câmara de Lobos",
+    "Funchal (Santa Luzia)": "Funchal",
+    "Funchal (Santa Maria Maior)": "Funchal",
+    "Funchal (São Pedro)": "Funchal",
+    "Funchal (Sé)": "Funchal",
+    "Imaculado Coração de Maria": "Funchal",
+    "Monte": "Funchal",
+    "Santo António": "Funchal",
+    "São Gonçalo": "Funchal",
+    "São Martinho": "Funchal",
+    "São Roque": "Funchal",
+    "Água de Pena": "Machico",
+    "Caniçal": "Machico",
+    "Machico": "Machico",
+    "Porto da Cruz": "Machico",
+    "Canhas": "Ponta do Sol",
+    "Madalena do Mar": "Ponta do Sol",
+    "Ponta do Sol": "Ponta do Sol",
+    "Campanário": "Ribeira Brava",
+    "Tabua": "Ribeira Brava",
+    "Caniço": "Santa Cruz",
+    "Faial": "Santana"
+};
+
+// Função que pré-carrega imagens para cache
 function preloadSvgs(svgList) {
     svgList.forEach((name) => {
         const img = new Image();
@@ -12,7 +50,7 @@ function preloadSvgs(svgList) {
     });
 }
 
-window.initGraph = function (propertiesJson) {
+window.initGraph = function () {
     const container = document.getElementById("visualizacao-grafica");
     container.innerHTML = '';
 
@@ -65,7 +103,7 @@ window.initGraph = function (propertiesJson) {
     ]);
 
 
-    // ✅ Mostra a imagem inicial (pré-carregada se existir)
+    // Mostra a imagem inicial (pré-carregada se existir)
     const defaultKey = "null-null.svg";
     const preloaded = preloadedImages[defaultKey];
     if (preloaded) {
@@ -78,6 +116,9 @@ window.initGraph = function (propertiesJson) {
         initialImg.style.height = "auto";
         container.appendChild(initialImg);
     }
+
+    window.updateGraph(null, "calheta", null);
+    window.updateGraph(null, null, null);
 };
 
 window.updateGraph = function (ilha, concelho, freguesia) {
@@ -85,12 +126,20 @@ window.updateGraph = function (ilha, concelho, freguesia) {
 
     let newFile;
     if (ilha && !concelho && !freguesia) {
-        newFile = `${ilha}.svg`;
+        if (ilha == "NA") newFile = `Santana-null.svg`; // SVG that appears to be off
+        else  newFile = `null-null.svg`;
     } else if (concelho && !freguesia) {
+        console.log(`${concelho}-null.svg`);
         newFile = `${concelho}-null.svg`;
     } else if (concelho && freguesia) {
+        console.log(`${concelho}-${freguesia}.svg`);
         newFile = `${concelho}-${freguesia}.svg`;
+    }else if (freguesia){
+        console.log(`A procura do concelho...`);
+        updateGraphFromFreguesiaOnly(freguesia);
+        return;
     } else {
+        console.log(`null-null.svg`);
         newFile = "null-null.svg";
     }
 
@@ -113,16 +162,22 @@ window.updateGraph = function (ilha, concelho, freguesia) {
     newImg.onload = () => {
         newImg.style.opacity = "0";
         newImg.style.zIndex = "2";
+        newImg.style.transition = "opacity 1s ease-in-out";
 
-
+        // Força reflow
+        newImg.offsetHeight;
 
         if (currentImg) {
             currentImg.style.zIndex = "1";
+            currentImg.style.transition = "opacity 1s ease-in-out";
             newImg.style.opacity = "1";
             currentImg.style.opacity = "0";
+
             setTimeout(() => {
                 container.removeChild(currentImg);
             }, 1000);
+        } else {
+            newImg.style.opacity = "1";
         }
     };
 
@@ -130,3 +185,17 @@ window.updateGraph = function (ilha, concelho, freguesia) {
         newImg.onload(); // immediate if already cached
     }
 };
+
+window.updateGraphFromFreguesiaOnly = function(freguesia) {
+    const concelho = freguesiaToConcelho[freguesia];
+    if (concelho) {
+        window.updateGraph(null, concelho, freguesia);
+    } else {
+        console.warn("Não foi possível encontrar concelho para freguesia:", freguesia);
+        window.updateGraph(null, null, null);
+    }
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+    console.log("A tentar iniciar a imagem");
+});

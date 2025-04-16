@@ -26,9 +26,9 @@ public class LandingView extends VerticalLayout {
         H1 titulo = new H1("Exploração de Terrenos");
         titulo.addClassName("titulo");
 
-        // Dropdown
+        //Dropdown
         ComboBox<String> freguesiaDropdown = new ComboBox<>("Selecione freguesia");
-        List<String> options = propertiesLoader.getFreguesias();
+        List<String> options = propertiesLoader.getParishes();
         options.add("Outras");
         options.add("Todas");
         freguesiaDropdown.setItems(options);

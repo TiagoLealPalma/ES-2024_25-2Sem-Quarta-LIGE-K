@@ -16,8 +16,10 @@ public class SVGGenerator {
         Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
 
-        int width = 600;
-        int height = 300;
+        // Canvas com resolução aumentada
+        int width = 1050;
+        int height = 700;
+
 
         // Normaliza coordenadas
         double minX = properties.stream().mapToDouble(SimplerProperty::getX).min().orElse(0);
@@ -32,20 +34,31 @@ public class SVGGenerator {
             double normX = (p.getX() - minX) * scaleX;
             double normY = (p.getY() - minY) * scaleY;
 
-            // desenha círculo laranja translúcido com sombra (simulada)
-            if((munincipio == "null" && freguesia == "null") || (freguesia == "null" && p.getMunincipio().contains(munincipio)) ||
-                    p.getFreguesia().contains(freguesia))
-                svgGenerator.setPaint(new Color(234, 175, 24, 50)); // opacidade 50
-            else
-                svgGenerator.setPaint(new Color(234, 175, 24, 2));
-            svgGenerator.fillOval((int) normX, (int) normY, 3, 3);
+            boolean pertenceFiltro =
+                    (munincipio == "null" && freguesia == "null") ||
+                            (freguesia == "null" && p.getMunincipio().contains(munincipio)) ||
+                            p.getFreguesia().contains(freguesia);
+
+            if (pertenceFiltro) {
+                // Brilho leve antes do ponto principal
+                svgGenerator.setPaint(new Color(234, 175, 24, 30));
+                svgGenerator.fillOval((int) normX - 1, (int) normY - 1, 4, 4);
+
+                // Ponto principal pequeno e vibrante
+                svgGenerator.setPaint(new Color(234, 175, 24, 200));
+                svgGenerator.fillOval((int) normX, (int) normY, 1, 1);
+            } else {
+                svgGenerator.setPaint(new Color(234, 175, 24, 2)); // ponto quase invisível
+                svgGenerator.fillOval((int) normX, (int) normY, 3, 3);
+            }
         }
 
-        if(freguesia == null)freguesia = "null";
+        if (freguesia == null) freguesia = "null";
 
-        System.err.print("A escrever o ficheiro: src/main/resources/" + munincipio+"-"+freguesia+".svg");
+        System.err.println("A escrever o ficheiro: src/main/resources/META-INF/resources/svgs/" + munincipio + "-" + freguesia + ".svg");
+
         // Guarda como ficheiro SVG
-        try (FileWriter out = new FileWriter("src/main/resources/" + munincipio+"-"+freguesia+".svg")) {
+        try (FileWriter out = new FileWriter("src/main/resources/META-INF/resources/svgs/" + munincipio + "-" + freguesia + ".svg")) {
             svgGenerator.stream(out);
         }
     }

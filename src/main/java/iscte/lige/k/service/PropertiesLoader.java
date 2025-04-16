@@ -21,42 +21,70 @@ public class PropertiesLoader {
     private static PropertiesLoader instance = null;
     private static boolean loaded = false;
 
-    public Map<Integer, Owner> owners = new HashMap<Integer, Owner>();
+    private Map<Integer, Owner> owners = new HashMap<Integer, Owner>();
+    private HashMap<Owner, Map<Owner, Integer>> ownersNeighbouringRelations = new HashMap<>();
+
+
     private List<Property> properties = new ArrayList<Property>();
     private List<SimplerProperty> simplerProperties = new ArrayList<>();
-    private Map<String, List<Property>> propertyMapByFreguesia = new HashMap<>();
+
+
+    private List<String> parishes = new ArrayList<>();
+    private List<String> counties = new ArrayList<>();
+    private List<String> islands = new ArrayList<>();
+    private Map<String, List<Property>> propertiesByParish = new HashMap<>();
+    private Map<String, List<Property>> propertiesByCounty = new HashMap<>();
+    private Map<String, List<Property>> propertiesByIsland = new HashMap<>();
+
+    private Map<String, List<String>> mapMunicipioToFreguesia = new HashMap<>();
     private List<Trade> trades = new ArrayList<>();
 
-    private List<String> freguesias = new ArrayList<>();
-    private List<String> munincipios = new ArrayList<>();
-    private List<String> ilhas = new ArrayList<>();
-    private Map<String, List<String>> mapMunicipioToFreguesia = new HashMap<>();
+    // loadingOptions[0] = criteria  && loadingOptions[1] = value
+    private String[] loadingOptions = {"null","null"};  // i.e loadingOptions[0] = "freguesia" && loadingOptions[1] = "Fajã de Ovelha"
 
-    private String freguesia = null;
 
-    // Context bundle needed to load Trades page
-    public class TradesPageBundle {
-        private String freguesia;
-        private List<Property> properties;
-        private List<Trade> trades;
 
-        public TradesPageBundle(String freguesia, List<Property> properties, List<Trade> trades){
-            this.freguesia = freguesia;
-            this.properties = properties;
-            this.trades = trades;
+    private PropertiesLoader(){
+        // On initialization, parse and calculate the data structures with the csv file
+        // on src/main/resources (generalized later)
+        parseData("src/main/resources/Madeira-Moodle-1.1.csv");
+
+        // Build needed structures
+        connectNeighbours();
+        generateSimplerProperties();
+        buildOwnersNeighbouringRelations();
+        calculateTrades();
+
+        // Inform that the instance is fully loaded and safe to use
+        synchronized (this) {
+            loaded = true;
+            this.notifyAll();
+            System.err.println("PropertiesLoader Instance has been fully loaded.");
         }
-
-        public String getFreguesia() { return freguesia; }
-
-        public List<Property> getProperties() { return properties; }
-
-        public List<Trade> getTrades() { return trades; }
     }
 
-    // On initialization, parse and calculate the data structures with the csv file
-    // on src/main/resources
-    private PropertiesLoader(){
-        File csv = new File("src/main/resources/Madeira-Moodle-1.1.csv");
+    private void checkLocked() {
+        synchronized (this) {
+            while (!loaded) {
+                try {
+                    this.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
+    public static synchronized PropertiesLoader getInstance(){
+        if(instance == null){
+            instance = new PropertiesLoader();
+        }
+        return instance;
+    }
+
+    private void parseData(String path){
+        File csv = new File(path);
+
         if (!csv.exists()) {
             System.err.println("Csv file does not exist, or path is incorrect");
             return;
@@ -66,102 +94,55 @@ public class PropertiesLoader {
             WKTReader reader = new WKTReader();
             s.nextLine();
 
-            // Loading bar in terminal
-            System.err.println("\nParsing properties from csv...");
-            int totalComparisons = 35000;
-            int progress = 0;
-            int barLength = 100;
 
-            int DEVELPOMENT_LIMIT = 1000;
-
-            while(s.hasNextLine() && DEVELPOMENT_LIMIT != 0){
+            while(s.hasNextLine()) {
                 String line = s.nextLine();
                 String[] data = line.split(";");
 
-                // Convert to Geometry so the neighbours can be found
-                Geometry geometry = reader.read(data[5]);
-
-                // Check for new freguesia, munincipios e ilhas
-                if(!freguesias.contains(data[7])) freguesias.add(data[7]);
-                if(!munincipios.contains(data[8])) munincipios.add(data[8]);
-                if(!ilhas.contains(data[9])) ilhas.add(data[9]);
-
-                mapMunicipioToFreguesia.computeIfAbsent(data[8], k -> new ArrayList<>());
-                if(!mapMunicipioToFreguesia.get(data[8]).contains(data[7]))
-                    mapMunicipioToFreguesia.get(data[8]).add(data[7]);
-
-
                 // Check if the Owner is already present in the list
                 Owner owner = owners.get(Integer.parseInt(data[6]));
-                if(owner == null) {
+                if (owner == null) {
                     owner = new Owner(data[6]);
                     owners.put(Integer.parseInt(data[6]), owner);
                 }
 
-                try {
-                    Double area = Double.parseDouble(data[3]);
-                    Double price = Double.parseDouble(data[4]);
 
-                    // Insert property data into struct
-                    Property p = new Property(data[1], data[2], area, price, geometry,
-                            owner, data[7], data[8], data[9]);
+                // Convert to Geometry so the neighbours can be found
+                Geometry geometry = reader.read(data[5]);
 
-                    // Add property to properties list.
-                    properties.add(p);
+                Double area = Double.parseDouble(data[3]);
+                Double price = Double.parseDouble(data[4]);
 
-                    // Add do dictionary <Freguesia, List<Property>>
-                    if (propertyMapByFreguesia.containsKey(data[7]))
-                        propertyMapByFreguesia.get(data[7]).add(p); // Adicionar no mapa da freguesia
-                    else {
-                        List<Property> list = new ArrayList<>();
-                        list.add(p);
-                        propertyMapByFreguesia.put(data[7], list);
-                    }
-                } catch (NumberFormatException e) {
-                    System.err.println("Invalid number format in CSV: " + Arrays.toString(data));
+                // Insert property data into struct
+                Property p = new Property(data[1], data[2], area, price, geometry,
+                        owner, data[7], data[8], data[9]);
+
+                // Add property to properties list.
+                properties.add(p);
+
+
+
+                // Check for new parish, county or island
+                if (!parishes.contains(data[7])) parishes.add(data[7]);
+                if (!counties.contains(data[8])) counties.add(data[8]);
+                if (!islands.contains(data[9])) islands.add(data[9]);
+
+                mapMunicipioToFreguesia.computeIfAbsent(data[8], k -> new ArrayList<>());
+                if (!mapMunicipioToFreguesia.get(data[8]).contains(data[7]))
+                    mapMunicipioToFreguesia.get(data[8]).add(data[7]);
+
+                // Add do dictionary <Freguesia, List<Property>>
+                if (propertiesByParish.containsKey(data[7]))
+                    propertiesByParish.get(data[7]).add(p); // Adicionar no mapa da freguesia
+                else {
+                    List<Property> list = new ArrayList<>();
+                    list.add(p);
+                    propertiesByParish.put(data[7], list);
                 }
 
-                progress++;
-                int percent = (int) ((progress / (double) totalComparisons) * 100);
-                int filled = (int) ((progress / (double) totalComparisons) * barLength);
-                String bar = "[" + "#".repeat(filled) + " ".repeat(barLength - filled) + "] " + percent + "%";
-
-                //System.out.print("\r" + bar);
-
-                //DEVELPOMENT_LIMIT--;
             }
-
-            int totalProperties = properties.size();
-            for(Owner o : owners.values()){
-                for(Property p : o.getProperties()) totalProperties--;
-            }
-            assert totalProperties == 0; // Check consistency between properties in list and connected to owners
-
-            // Insert data into a spatially driven tree so it drives the magnitude of connect method down
-            STRtree index = new STRtree();
-            for (Property p : properties) {
-                index.insert(p.getGeometry().getEnvelopeInternal(), p);
-            }
-
-            // Run through the list and connect properties which geometry touches
-            connectNeighbours(index);
-            trades = TradeService_MR.getTradesList(owners.values().stream().toList());
-            buildSimplerProperties();
-           // calculateAllAvgAreas();
-            System.err.print("Building SVGs");
-            //buildSVG();
-
-            // Inform that the instance is fully loaded and safe to use
-            synchronized (this) {
-                loaded = true;
-                this.notifyAll();
-                System.err.println("PropertiesLoader Instance has been fully loaded.");
-            }
-
-        } catch (ParseException | FileNotFoundException e) {
-            System.err.println("Error parsing geometry: " + e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (NumberFormatException | ParseException | FileNotFoundException e) {
+            System.err.println("Error occurred while reading properties from csv" + e.getMessage());
         }
     }
 
@@ -179,19 +160,12 @@ public class PropertiesLoader {
         }
     }
 
-
-    private void calculateAllAvgAreas() {
-        for (Owner o : owners.values()){
-            o.calculateAvgArea();
+    private void connectNeighbours() {
+        // Insert data into a spatially driven tree, so it drives the magnitude of connect method down (Only compares with nearby properties)
+        STRtree index = new STRtree();
+        for (Property p : properties) {
+            index.insert(p.getGeometry().getEnvelopeInternal(), p);
         }
-    }
-
-
-    private void connectNeighbours(STRtree index) {
-        System.err.println("\nCalculating property neighbours...");
-        int totalComparisons = properties.size();
-        int progress = 0;
-        int barLength = 100; // Número de caracteres na barra
 
         for (Property p1 : properties) {
             Geometry g1 = p1.getGeometry().buffer(0); // Clean faulty geometry
@@ -204,72 +178,100 @@ public class PropertiesLoader {
                     p2.addNeighbour(p1);
                 }
             }
-            progress++;
-            int percent = (int) ((progress / (double) totalComparisons) * 100);
-            int filled = (int) ((progress / (double) totalComparisons) * barLength);
-            String bar = "[" + "#".repeat(filled) + " ".repeat(barLength - filled) + "] " + percent + "%";
-
-            //System.out.print("\r" + bar);
         }
     }
 
+    // Return a properties list based on the current criteria and value on the loading options array
     public List<Property> getPropertiesWithNeighbours () {
         checkLocked();
 
-        System.err.println("getneighwithneigh: " + freguesia); // DEBUG
-        List<Property> propertyList = new ArrayList<>();
+        System.err.println("Getting properties for following criteria: " + loadingOptions[0] + ":" + loadingOptions[1]); // DEBUG
+        List<Property> propertiesList = null;
+        String criteria = loadingOptions[0];
+        String value = loadingOptions[1];
 
-        if(getFreguesias().contains(freguesia)) {
-            // Get properties
-            for (Property p : propertyMapByFreguesia.get(freguesia)) {
-                if (!p.getNeighbourProperties().isEmpty())
-                    propertyList.add(p);
-            }
-        } else {
-            System.err.println("Freguesia nao foi reconhecida, ou outros ou todos: " + freguesia);
+        // According to the criteria, select the correct list of properties
+        switch (criteria) {
+            case "ilha":
+                propertiesList = propertiesByIsland.get(value);
+                break;
+            case "concelho":
+                propertiesList = propertiesByCounty.get(value);
+                break;
+            case "freguesia":
+                propertiesList = propertiesByParish.get(value);
+                break;
+            default:
+                throw new RuntimeException("Unknown property criteria: " + criteria);
+        }
+
+        if(propertiesList == null) {
+            System.err.println("No properties found for following value: " + value);
             return null;
         }
 
-        return propertyList; // DEBUG, remover depois
+        return propertiesList
+                .stream()
+                .filter((t)-> !t.getNeighbourProperties().isEmpty())
+                .toList();
+    }
+    private void calculateTrades() {
+        this.trades = TradeService_MR.getTradesList(owners.values().stream().toList());
     }
 
-    public List<Trade> getTrades (String freguesia){
+    // Return a trades list based on the current criteria and value on the loading options array
+    public List<Trade> getTrades (){
         checkLocked();
 
-        List<Trade> filteredTrades = new ArrayList<>();
+        String criteria = loadingOptions[0];
+        String value = loadingOptions[1];
 
-        if(getFreguesias().contains(freguesia)) {
-            filteredTrades = trades.stream()
-                    .filter(t -> t.getOwner1Property().getFreguesia().equals(freguesia) &&
-                            t.getOwner2Property().getFreguesia().equals(freguesia))
+
+        List<Trade> filteredTrades = switch (criteria) {
+            case "ilha" -> trades.stream()
+                    .filter(t -> t.getOwner1Property().getIlha().equals(value) &&
+                            t.getOwner2Property().getIlha().equals(value))
                     .toList();
-        } else {
-            System.err.println("Freguesia nao foi reconhecida, ou outros ou todos: " + freguesia);
-            return null;
+
+            case "concelho" -> trades.stream()
+                    .filter(t -> t.getOwner1Property().getMunicipio().equals(value) &&
+                            t.getOwner2Property().getMunicipio().equals(value))
+                    .toList();
+
+            case "freguesia" -> trades.stream()
+                    .filter(t -> t.getOwner1Property().getFreguesia().equals(value) &&
+                            t.getOwner2Property().getFreguesia().equals(value))
+                    .toList();
+
+            default -> null;
+        };
+
+        if (filteredTrades == null || filteredTrades.isEmpty()) {
+            System.err.println("No trades found for given value: " + value);
         }
 
-        return filteredTrades; // DEBUG, remover depois
+        return filteredTrades;
     }
 
 
 
+    public Map<String, List<Property>> getPropertiesByParish() { return propertiesByParish; }
 
-    public Map<String, List<Property>> getPropertyMapByFreguesia() { return propertyMapByFreguesia; }
-
-    public List<String> getFreguesias(){
+    public HashMap<Owner, Map<Owner, Integer>> getOwnerRelationships() {
         checkLocked();
-
-        List<String> result = new ArrayList<>(propertyMapByFreguesia.keySet().stream().sorted().toList());
-        result.remove("NA");
-        return result;
+        return this.ownersNeighbouringRelations;
     }
 
-    public void setLoadingOptions(String freguesia){
+    public void setLoadingOptions(String[] options){
         checkLocked();
-        this.freguesia = freguesia;
+        if(!"proprietariosfreguesiaconcelhoilha".toLowerCase().contains(options[0].toLowerCase()))
+            throw new IllegalArgumentException("Criterio inserido não é valido.");
+
+        this.loadingOptions = options;
+
     }
 
-    public void buildSimplerProperties(){
+    public void generateSimplerProperties(){
         System.err.println("Building simpler versions of properties");
         for (Property property : properties){
             if(!property.getGeometry().isValid() || property.getGeometry().isEmpty())
@@ -279,39 +281,46 @@ public class PropertiesLoader {
         }
     }
 
-    private void checkLocked() {
-        synchronized (this) {
-            while (!loaded) {
-                try {
-                    this.wait();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+    public void buildOwnersNeighbouringRelations(){
+        HashMap<Owner, Map<Owner, Integer>> ownersNeighbouringRelations = new HashMap<>();
+        for (Owner owner : owners.values()) {
+            HashMap <Owner, Integer> relation = new HashMap<>();
+            ownersNeighbouringRelations.put(owner, relation);
+            for (Property property : owner.getProperties()) {
+                for (Property neighbour : property.getNeighbourProperties()) {
+                    if(!neighbour.getOwner().equals(owner))
+                        relation.merge(neighbour.getOwner(), 1, Integer::sum);
                 }
             }
-
         }
+
+        this.ownersNeighbouringRelations = ownersNeighbouringRelations;
     }
 
-    public static synchronized PropertiesLoader getInstance(){
-        if(instance == null){
-            instance = new PropertiesLoader();
-        }
-        return instance;
-    }
 
-    public List<String> getMunincipios() {
+
+    public Map<Integer, Owner> getOwners(){
         checkLocked();
-        return munincipios;
+        return this.owners;
     }
 
-    public List<String> getIlhas() {
-        checkLocked();
-        return ilhas;
+    public String[] getLoadingOptions(){
+        return loadingOptions;
     }
 
-    public List<String> getFreguesiasUnfiltered() {
+    public List<String> getCounties() {
         checkLocked();
-        return freguesias;
+        return propertiesByCounty.keySet().stream().sorted().toList();
+    }
+
+    public List<String> getIslands() {
+        checkLocked();
+        return propertiesByIsland.keySet().stream().sorted().toList();
+    }
+
+    public List<String> getParishes() {
+        checkLocked();
+        return propertiesByParish.keySet().stream().sorted().toList();
     }
 
     public List<SimplerProperty> getSimplerProperties() {
