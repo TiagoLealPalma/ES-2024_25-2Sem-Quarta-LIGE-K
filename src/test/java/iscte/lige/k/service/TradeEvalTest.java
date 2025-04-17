@@ -54,15 +54,20 @@ public class TradeEvalTest {
         Owner o1 = new Owner("Eva");
         Owner o2 = new Owner("Filipe");
 
-        Property p1 = new Property("5", "E", 0.0, 100.0, parseGeometry("POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))"), o1, "", "", "");
+        // Propriedade com área 0 (muito pequena)
+        Property p1 = new Property("5", "E", 0.0, 0.0, parseGeometry("POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))"), o1, "", "", "");
+
+        // Propriedade com área 100 (grande)
         Property p2 = new Property("6", "F", 100.0, 100.0, parseGeometry("POLYGON((1 0, 1 2, 3 2, 3 0, 1 0))"), o2, "", "", "");
 
+        // Criar a troca entre as propriedades
         Trade trade = new Trade(o1, o2, p1, p2);
         TradeEval.evaluateTrade(trade);
 
-        // Score = (1 - 100/100) * 100 = 0
+        // Esperado: Diferença extrema (90% ou mais) -> Score = 0
         assertEquals(0, trade.getScore());
     }
+
 
     @Test
     public void testIntToColorAtZero() {

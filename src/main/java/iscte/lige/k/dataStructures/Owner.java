@@ -9,6 +9,7 @@ public class Owner {
     private String name;
     private List<Property> properties;
     private int numOfProperties = 0;
+    private Property mainProperty; // A propriedade principal
 
     private class Area{
         double area;
@@ -37,6 +38,7 @@ public class Owner {
         this.name = name;
         this.properties = new ArrayList<>();
         this.properties.add(property);
+        this.mainProperty = property;
         numOfProperties++;
     }
 
@@ -45,7 +47,17 @@ public class Owner {
             throw new IllegalArgumentException("Property cannot be null");
 
         properties.add(property);
+        if (mainProperty == null) {
+                mainProperty = property; // A primeira propriedade adicionada pode ser a principal
+        }
         numOfProperties++;
+    }
+    public Property getMainProperty() {
+        return mainProperty;
+    }
+
+    public void setMainProperty(Property mainProperty) {
+        this.mainProperty = mainProperty;
     }
 
     public double calculateAvgArea(){
