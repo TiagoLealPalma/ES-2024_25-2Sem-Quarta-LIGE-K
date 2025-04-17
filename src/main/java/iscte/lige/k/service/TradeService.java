@@ -6,7 +6,7 @@ import iscte.lige.k.dataStructures.Trade;
 
 import java.util.*;
 
-public class TradeService_MR {
+public class TradeService {
     public PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();
 
     private static int countNeighbouringRelations(Owner owner, Owner otherOwner) { // Quantas vezes são eles vizinhos
@@ -76,7 +76,7 @@ public class TradeService_MR {
     }
 
     public static void main(String[] args) {
-        TradeService_MR m = new TradeService_MR();
+        TradeService m = new TradeService();
         List<Trade> tradesList = m.getTradesList(m.propertiesLoader.getOwners().values().stream().toList());
 
         if (!tradesList.isEmpty()) {

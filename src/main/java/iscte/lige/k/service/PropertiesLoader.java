@@ -211,7 +211,7 @@ public class PropertiesLoader {
                 .toList();
     }
     private void calculateTrades() {
-        this.trades = TradeService_MR.getTradesList(owners.values().stream().toList());
+        this.trades = TradeService.getTradesList(owners.values().stream().toList());
     }
 
     // Return a trades list based on the current criteria and value on the loading options array
