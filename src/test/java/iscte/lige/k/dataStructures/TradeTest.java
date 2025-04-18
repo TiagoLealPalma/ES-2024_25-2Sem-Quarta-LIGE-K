@@ -12,10 +12,13 @@ public class TradeTest {
 
     private Owner owner1;
     private Owner owner2;
+    private Owner owner3;
     private Property p1;
     private Property p2;
+    private Property p3;
     private Property neighbour1;
     private Property neighbour2;
+    private Property neighbour3;
     private Trade trade;
 
     @Before
@@ -27,21 +30,26 @@ public class TradeTest {
 
         owner1 = new Owner("Alice");
         owner2 = new Owner("Bob");
+        owner3 = new Owner("RicFazeres");
 
         p1 = new Property("1", "001", 10.0, 100.0, g1, owner1, "P1", "C1", "I1");
         p2 = new Property("2", "002", 12.0, 120.0, g2, owner2, "P1", "C1", "I1");
+        p3 = new Property("3", "002", 12.0, 200.0, g2, owner3, "P1", "C1", "I1");
 
-        neighbour1 = new Property("3", "003", 14.0, 140.0, g3, owner1, "P1", "C1", "I1");
-        neighbour2 = new Property("4", "004", 16.0, 160.0, g4, owner2, "P1", "C1", "I1");
+        neighbour1 = new Property("4", "003", 14.0, 140.0, g3, owner1, "P1", "C1", "I1");
+        neighbour2 = new Property("5", "004", 16.0, 160.0, g4, owner2, "P1", "C1", "I1");
+        neighbour3 = new Property("6", "004", 16.0, 160.0, g4, owner3, "P1", "C1", "I1");
 
         // Estabelecer vizinhança obrigatória para o trade ser válido
         p2.addNeighbour(neighbour1); // owner1 ganha p2
+        p3.addNeighbour(neighbour1); // owner1 ganha p2
         p1.addNeighbour(neighbour2); // owner2 ganha p1
+        p1.addNeighbour(neighbour3); // owner2 ganha p1
 
         trade = new Trade(owner1, owner2, p1, p2);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testTradeWithoutValidMainPropertiesShouldThrow() throws Exception {
         // Geometrias afastadas — não são vizinhas
         Geometry g1 = new WKTReader().read("POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))");
@@ -54,7 +62,7 @@ public class TradeTest {
         Property p2 = new Property("2", "002", 10.0, 60.0, g2, o2, "P1", "C1", "I1");
 
         // Aqui não criamos nenhuma relação de vizinhança — não são vizinhas!
-        new Trade(o1, o2, p1, p2); // Deve lançar IllegalStateException
+        assertThrows(IllegalStateException.class, () -> new Trade(o1, o2, p1, p2)); // Deve lançar IllegalStateException
     }
 
 
@@ -87,6 +95,15 @@ public class TradeTest {
         another.setScore(75);
 
         assertTrue(trade.compareTo(another) < 0); // because we negate the comparison
+    }
+
+    @Test
+    public void compareToTieBreaker() {
+        Trade another = new Trade(owner1, owner3, p1, p3);
+        trade.setScore(90);
+        another.setScore(90);
+
+        assertTrue(trade.compareTo(another) > 0); // because we negate the comparison
     }
 
     @Test

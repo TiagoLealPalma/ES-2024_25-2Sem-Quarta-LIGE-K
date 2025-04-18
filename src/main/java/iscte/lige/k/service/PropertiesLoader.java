@@ -4,6 +4,7 @@ import iscte.lige.k.dataStructures.Owner;
 import iscte.lige.k.dataStructures.Property;
 import iscte.lige.k.dataStructures.SimplerProperty;
 import iscte.lige.k.dataStructures.Trade;
+import iscte.lige.k.util.SVGGenerator;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
@@ -99,18 +100,13 @@ public class PropertiesLoader {
                 String[] data = line.split(";");
 
                 // Check if the Owner is already present in the list
-                Owner owner = owners.get(Integer.parseInt(data[6]));
-                if (owner == null) {
-                    owner = new Owner(data[6]);
-                    owners.put(Integer.parseInt(data[6]), owner);
-                }
-
+                Owner owner = owners.computeIfAbsent(Integer.parseInt(data[6]), k -> new Owner(data[6]));
 
                 // Convert to Geometry so the neighbours can be found
                 Geometry geometry = reader.read(data[5]);
 
-                Double area = Double.parseDouble(data[3]);
-                Double price = Double.parseDouble(data[4]);
+                double area = Double.parseDouble(data[3]);
+                double price = Double.parseDouble(data[4]);
 
                 // Insert property data into struct
                 Property p = new Property(data[1], data[2], area, price, geometry,

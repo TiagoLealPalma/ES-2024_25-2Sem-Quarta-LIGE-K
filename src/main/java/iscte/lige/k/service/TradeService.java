@@ -9,7 +9,7 @@ import java.util.*;
 public class TradeService {
     public PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();
 
-    private static int countNeighbouringRelations(Owner owner, Owner otherOwner) { // Quantas vezes são eles vizinhos
+    private static int countNeighbouringRelations(Owner owner, Owner otherOwner) {
         int count = 0;
         for(Property property : owner.getProperties()) {
             for(Property otherProperty : otherOwner.getProperties()) {
@@ -35,9 +35,6 @@ public class TradeService {
         }
         return list;
     }
-
-
-
 
 
     public static List<Trade> getTradesList(List<Owner> owners) {
@@ -73,17 +70,6 @@ public class TradeService {
             }
         }
         return trades;
-    }
-
-    public static void main(String[] args) {
-        TradeService m = new TradeService();
-        List<Trade> tradesList = m.getTradesList(m.propertiesLoader.getOwners().values().stream().toList());
-
-        if (!tradesList.isEmpty()) {
-            System.out.println(tradesList.get(0)); // Imprime apenas a primeira trade
-        } else {
-            System.out.println("Nenhuma trade encontrada.");
-        }
     }
 
 }

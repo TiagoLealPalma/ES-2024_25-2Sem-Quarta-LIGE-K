@@ -18,7 +18,7 @@ public class GraphViewerComponent extends Div {
     Runnable onGraphLoadedCallback;
 
     public GraphViewerComponent() {
-        // JS irá iniciar o carregamento chamando @ClientCallable
+        // JS will call @ClientCallable to ask for the data after displaying loading screen
         System.err.println("GraphViewerComponent initialized. Awaiting JS request...");
     }
 
@@ -41,7 +41,7 @@ public class GraphViewerComponent extends Div {
         System.err.println("Data requested from client. Loading graph...");
         PropertiesLoader loader = PropertiesLoader.getInstance();
         JsonObject json = null;
-        if (loader.getLoadingOptions()[0] == "Proprietarios")
+        if (Objects.equals(loader.getLoadingOptions()[0], "Proprietarios"))
             json = buildGraphData(loader.getOwners(), loader.getOwnerRelationships());
         else json = buildGraphData(loader.getPropertiesWithNeighbours());
         System.err.println("Sending graph to JS...");

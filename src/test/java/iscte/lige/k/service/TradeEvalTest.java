@@ -1,10 +1,12 @@
 package iscte.lige.k.service;
 
+import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import iscte.lige.k.dataStructures.Owner;
 import iscte.lige.k.dataStructures.Property;
 import iscte.lige.k.dataStructures.Trade;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
 import static org.junit.Assert.*;
@@ -21,28 +23,52 @@ public class TradeEvalTest {
     }
 
     @Test
-    public void testEvaluateTradeWithEqualAreas() {
-        Owner o1 = new Owner("Ana");
-        Owner o2 = new Owner("Bruno");
+    public void testEvaluateTradeWithEqualAreas() throws ParseException {
+        Geometry g1 = new WKTReader().read("POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))");
+        Geometry g2 = new WKTReader().read("POLYGON((2 0, 2 2, 4 2, 4 0, 2 0))");
+        Geometry g3 = new WKTReader().read("POLYGON((1 1, 1 3, 3 3, 3 1, 1 1))");
+        Geometry g4 = new WKTReader().read("POLYGON((3 1, 3 3, 5 3, 5 1, 3 1))");
 
-        Property p1 = new Property("1", "A", 100.0, 100.0, parseGeometry("POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))"), o1, "", "", "");
-        Property p2 = new Property("2", "B", 100.0, 100.0, parseGeometry("POLYGON((2 0, 2 1, 3 1, 3 0, 2 0))"), o2, "", "", "");
+        Owner owner1 = new Owner("Alice");
+        Owner owner2 = new Owner("Bob");
 
-        Trade trade = new Trade(o1, o2, p1, p2);
+        Property p1 = new Property("1", "001", 10.0, 100.0, g1, owner1, "P1", "C1", "I1");
+        Property p2 = new Property("2", "002", 12.0, 100.0, g2, owner2, "P1", "C1", "I1");
+
+        Property neighbour1 = new Property("3", "003", 14.0, 140.0, g3, owner1, "P1", "C1", "I1");
+        Property neighbour2 = new Property("4", "004", 16.0, 160.0, g4, owner2, "P1", "C1", "I1");
+
+        // Estabelecer vizinhança obrigatória para o trade ser válido
+        p2.addNeighbour(neighbour1); // owner1 ganha p2
+        p1.addNeighbour(neighbour2); // owner2 ganha p1
+
+        Trade trade = new Trade(owner1, owner2, p1, p2);
         TradeEval.evaluateTrade(trade);
 
         assertEquals(100, trade.getScore());
     }
 
     @Test
-    public void testEvaluateTradeWithDifferentAreas() {
-        Owner o1 = new Owner("Carlos");
-        Owner o2 = new Owner("Diana");
+    public void testEvaluateTradeWithDifferentAreas() throws ParseException {
+        Geometry g1 = new WKTReader().read("POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))");
+        Geometry g2 = new WKTReader().read("POLYGON((2 0, 2 2, 4 2, 4 0, 2 0))");
+        Geometry g3 = new WKTReader().read("POLYGON((1 1, 1 3, 3 3, 3 1, 1 1))");
+        Geometry g4 = new WKTReader().read("POLYGON((3 1, 3 3, 5 3, 5 1, 3 1))");
 
-        Property p1 = new Property("3", "C", 100.0, 100.0, parseGeometry("POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))"), o1, "", "", "");
-        Property p2 = new Property("4", "D", 50.0, 50.0, parseGeometry("POLYGON((3 0, 3 1, 4 1, 4 0, 3 0))"), o2, "", "", "");
+        Owner owner1 = new Owner("Alice");
+        Owner owner2 = new Owner("Bob");
 
-        Trade trade = new Trade(o1, o2, p1, p2);
+        Property p1 = new Property("1", "001", 10.0, 100.0, g1, owner1, "P1", "C1", "I1");
+        Property p2 = new Property("2", "002", 12.0, 50.0, g2, owner2, "P1", "C1", "I1");
+
+        Property neighbour1 = new Property("3", "003", 14.0, 140.0, g3, owner1, "P1", "C1", "I1");
+        Property neighbour2 = new Property("4", "004", 16.0, 160.0, g4, owner2, "P1", "C1", "I1");
+
+        // Estabelecer vizinhança obrigatória para o trade ser válido
+        p2.addNeighbour(neighbour1); // owner1 ganha p2
+        p1.addNeighbour(neighbour2); // owner2 ganha p1
+
+        Trade trade = new Trade(owner1, owner2, p1, p2);
         TradeEval.evaluateTrade(trade);
 
         // Score = (1 - |100-50| / 150) * 100 = (1 - 50/150) * 100 = (2/3)*100 = 66
@@ -50,22 +76,29 @@ public class TradeEvalTest {
     }
 
     @Test
-    public void testEvaluateTradeWithExtremeDifference() {
-        Owner o1 = new Owner("Eva");
-        Owner o2 = new Owner("Filipe");
+    public void testEvaluateTradeWithExtremeDifference() throws ParseException {
+        Geometry g1 = new WKTReader().read("POLYGON((0 0, 0 2, 2 2, 2 0, 0 0))");
+        Geometry g2 = new WKTReader().read("POLYGON((2 0, 2 2, 4 2, 4 0, 2 0))");
+        Geometry g3 = new WKTReader().read("POLYGON((1 1, 1 3, 3 3, 3 1, 1 1))");
+        Geometry g4 = new WKTReader().read("POLYGON((3 1, 3 3, 5 3, 5 1, 3 1))");
 
-        // Propriedade com área 0 (muito pequena)
-        Property p1 = new Property("5", "E", 0.0, 0.0, parseGeometry("POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))"), o1, "", "", "");
+        Owner owner1 = new Owner("Alice");
+        Owner owner2 = new Owner("Bob");
 
-        // Propriedade com área 100 (grande)
-        Property p2 = new Property("6", "F", 100.0, 100.0, parseGeometry("POLYGON((1 0, 1 2, 3 2, 3 0, 1 0))"), o2, "", "", "");
+        Property p1 = new Property("1", "001", 10.0, 100.0, g1, owner1, "P1", "C1", "I1");
+        Property p2 = new Property("2", "002", 12.0, 1200.0, g2, owner2, "P1", "C1", "I1");
 
-        // Criar a troca entre as propriedades
-        Trade trade = new Trade(o1, o2, p1, p2);
+        Property neighbour1 = new Property("3", "003", 14.0, 140.0, g3, owner1, "P1", "C1", "I1");
+        Property neighbour2 = new Property("4", "004", 16.0, 160.0, g4, owner2, "P1", "C1", "I1");
+
+        // Estabelecer vizinhança obrigatória para o trade ser válido
+        p2.addNeighbour(neighbour1); // owner1 ganha p2
+        p1.addNeighbour(neighbour2); // owner2 ganha p1
+
+        Trade trade = new Trade(owner1, owner2, p1, p2);
         TradeEval.evaluateTrade(trade);
 
-        // Esperado: Diferença extrema (90% ou mais) -> Score = 0
-        assertEquals(0, trade.getScore());
+        assertEquals(15, trade.getScore());
     }
 
 
