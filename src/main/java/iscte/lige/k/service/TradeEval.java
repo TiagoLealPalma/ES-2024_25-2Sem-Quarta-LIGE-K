@@ -19,7 +19,6 @@ public class TradeEval {
     public static void evaluateTrade(Trade trade){
         double totalTradingArea = trade.getOwner1Property().getArea() + trade.getOwner2Property().getArea();
         double tradingAreaDelta = Math.abs(trade.getOwner1Property().getArea() - trade.getOwner2Property().getArea());
-
         trade.setScore((int)((1 - (tradingAreaDelta / totalTradingArea)) * 100));
     }
 

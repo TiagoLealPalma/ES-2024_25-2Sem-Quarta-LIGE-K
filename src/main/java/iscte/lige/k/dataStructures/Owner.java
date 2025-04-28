@@ -5,132 +5,182 @@ import org.locationtech.jts.geom.Geometry;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a property owner, allowing the registration of properties
+ * and the calculation of average land area, automatically grouping
+ * adjacent properties.
+ */
 public class Owner {
     private String name;
     private List<Property> properties;
-    private int numOfProperties = 0;
 
-    private class Area{
+    /**
+     * Helper inner class representing a group of adjacent properties,
+     * combining their area and geometry.
+     */
+    private class Area {
         double area;
         Geometry geometry;
         List<String> parcelas = new ArrayList<>();
 
+        /**
+         * Constructs a new Area from a single property.
+         * @param property the property used to initialize the area
+         */
         Area(Property property) {
             area = property.getArea();
             geometry = property.getGeometry();
             parcelas.add(property.getParcelaId());
         }
 
-        public void addArea(Property property){
+        /**
+         * Adds a property to the current area, updating the total area
+         * and uniting the geometry.
+         * @param property the property to add
+         */
+        public void addArea(Property property) {
             area += property.getArea();
             geometry.union(property.getGeometry());
             parcelas.add(property.getParcelaId());
         }
     }
 
-    public Owner (String name) {
+    /**
+     * Constructs an owner with no properties initially.
+     * @param name the owner's name
+     */
+    public Owner(String name) {
         this.name = name;
         this.properties = new ArrayList<>();
     }
 
-    public Owner (String name, Property property) {
+    /**
+     * Constructs an owner with an initial property.
+     * @param name the owner's name
+     * @param property the initial property
+     */
+    public Owner(String name, Property property) {
         this.name = name;
         this.properties = new ArrayList<>();
         this.properties.add(property);
-        numOfProperties++;
     }
 
+    /**
+     * Adds a property to the owner's property list.
+     * @param property the property to add
+     * @throws IllegalArgumentException if the property is null
+     */
     public void addProperty(Property property) {
         if (property == null)
             throw new IllegalArgumentException("Property cannot be null");
 
         properties.add(property);
-        numOfProperties++;
     }
 
-    public double calculateAvgArea(){
-        // Checks for robustness
-        if (numOfProperties == 0) return 0;
+    /**
+     * Calculates the average area of the owner's properties. Adjacent properties
+     * (touching or intersecting) are merged and treated as a single unit.
+     * @return the average area (including merged groups)
+     */
+    public double calculateAvgArea() {
+        if (properties.isEmpty()) return 0;
 
-
-        List<Property> uniqueProperties = new ArrayList<>(); // Properties that are not neighbours of each other
-        List<Area> jointProperties = new ArrayList<>(); // Properties next to one another
+        List<Property> uniqueProperties = new ArrayList<>();
+        List<Area> jointProperties = new ArrayList<>();
         List<Integer> notUnique = new ArrayList<>();
 
-        // Unir terrenos vizinhos, se existirem
+        // Iterate through all properties to group adjacent ones
         for (int i = 0; i < properties.size(); i++) {
-            // Verificar se propriedade ja faz parte de um grupo unido
             Area areaToEvaluate = null;
-            for(Area area : jointProperties){ // Se sim, pega nessa grupo e avalia
-                if(area.parcelas.contains(properties.get(i).parcelaId)) {
+
+            // Check if this property is already part of an existing group
+            for (Area area : jointProperties) {
+                if (area.parcelas.contains(properties.get(i).getParcelaId())) {
                     areaToEvaluate = area;
-                    //notUnique.add(i);
                 }
             }
 
-            if(areaToEvaluate == null){
+            // If not yet grouped, start a new group with this property
+            if (areaToEvaluate == null) {
                 areaToEvaluate = new Area(properties.get(i));
             }
 
-            // Guardar temporariamente a area para comparar se houve alteração no final
-            Double temp = areaToEvaluate.area;
+            // Save current area value to check later if it was changed
+            double temp = areaToEvaluate.area;
 
-            for(int j = 0; j < properties.size(); j++){
+            // Try to merge with other properties that are adjacent
+            for (int j = 0; j < properties.size(); j++) {
                 Property property = properties.get(j);
-                if(areaToEvaluate.parcelas.contains(property.getParcelaId())) // Já foi avaliado e unido
+
+                // Skip if already included in this group
+                if (areaToEvaluate.parcelas.contains(property.getParcelaId()))
                     continue;
 
-                // Se ainda nao estiver unido e intersetar, adicionar propriedade a area
-                if(areaToEvaluate.geometry.touches(property.getGeometry()) ||
-                        areaToEvaluate.geometry.intersects(property.getGeometry())){
+                // Merge if properties are adjacent
+                if (areaToEvaluate.geometry.touches(property.getGeometry()) ||
+                        areaToEvaluate.geometry.intersects(property.getGeometry())) {
+
                     areaToEvaluate.addArea(property);
-                    if(!notUnique.contains(i)) notUnique.add(i);
+                    if (!notUnique.contains(i)) notUnique.add(i);
                     notUnique.add(j);
                 }
             }
-            // Adicionar as joint properties se a area inicial diferir desta
-            if (temp != areaToEvaluate.area)
-                if(!jointProperties.contains(areaToEvaluate))
+
+            // If the area has changed, add it to the list of joint groups
+            if (temp != areaToEvaluate.area) {
+                if (!jointProperties.contains(areaToEvaluate))
                     jointProperties.add(areaToEvaluate);
+            }
         }
 
+        // Properties not merged are treated as individual (unique) properties
         for (int i = 0; i < properties.size(); i++) {
-            if(!notUnique.contains(i))
+            if (!notUnique.contains(i))
                 uniqueProperties.add(properties.get(i));
         }
 
-        // Calcular media
+        // Sum the areas
         double sum = 0;
         for (Property property : uniqueProperties) {
             sum += property.getArea();
         }
-        for (Area area: jointProperties){
+        for (Area area : jointProperties) {
             sum += area.area;
         }
 
-        //if(notUnique.size() > 0) // For DEBUG purposes
-            //System.err.println("Owner tem " + notUnique.size() + " propriedades unidas " + this.name + " " + jointProperties.size());
-
-        return sum/(uniqueProperties.size() + jointProperties.size());
+        // Compute the average
+        return sum / (uniqueProperties.size() + jointProperties.size());
     }
 
-    // Getters
-
+    /**
+     * Gets the owner's name.
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    public List<Property> getProperties() { return properties; }
+    /**
+     * Returns the list of properties.
+     * @return list of properties
+     */
+    public List<Property> getProperties() {
+        return properties;
+    }
 
+    /**
+     * Returns the number of registered properties.
+     * @return property count
+     */
     public int getNumOfProperties() {
-        return numOfProperties;
+        return properties.size();
     }
 
     @Override
     public String toString() {
         return "Owner{" +
                 "name='" + name + '\'' +
-                ", numOfProperties=" + numOfProperties +
+                ", numOfProperties=" + properties.size() +
                 '}';
     }
 }

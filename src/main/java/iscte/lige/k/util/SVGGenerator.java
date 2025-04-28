@@ -1,4 +1,4 @@
-package iscte.lige.k.service;
+package iscte.lige.k.util;
 
 import iscte.lige.k.dataStructures.SimplerProperty;
 import org.apache.batik.svggen.SVGGraphics2D;
@@ -36,8 +36,8 @@ public class SVGGenerator {
 
             boolean pertenceFiltro =
                     (munincipio == "null" && freguesia == "null") ||
-                            (freguesia == "null" && p.getMunincipio().contains(munincipio)) ||
-                            p.getFreguesia().contains(freguesia);
+                            (freguesia == "null" && p.getCounty().contains(munincipio)) ||
+                            p.getParish().contains(freguesia);
 
             if (pertenceFiltro) {
                 // Brilho leve antes do ponto principal

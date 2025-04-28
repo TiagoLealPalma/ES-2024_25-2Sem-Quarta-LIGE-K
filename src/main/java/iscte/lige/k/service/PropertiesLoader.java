@@ -4,6 +4,7 @@ import iscte.lige.k.dataStructures.Owner;
 import iscte.lige.k.dataStructures.Property;
 import iscte.lige.k.dataStructures.SimplerProperty;
 import iscte.lige.k.dataStructures.Trade;
+import iscte.lige.k.util.SVGGenerator;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
@@ -41,7 +42,6 @@ public class PropertiesLoader {
 
     // loadingOptions[0] = criteria  && loadingOptions[1] = value
     private String[] loadingOptions = {"null","null"};  // i.e loadingOptions[0] = "freguesia" && loadingOptions[1] = "Fajã de Ovelha"
-
 
 
     private PropertiesLoader(){
@@ -100,18 +100,13 @@ public class PropertiesLoader {
                 String[] data = line.split(";");
 
                 // Check if the Owner is already present in the list
-                Owner owner = owners.get(Integer.parseInt(data[6]));
-                if (owner == null) {
-                    owner = new Owner(data[6]);
-                    owners.put(Integer.parseInt(data[6]), owner);
-                }
-
+                Owner owner = owners.computeIfAbsent(Integer.parseInt(data[6]), k -> new Owner(data[6]));
 
                 // Convert to Geometry so the neighbours can be found
                 Geometry geometry = reader.read(data[5]);
 
-                Double area = Double.parseDouble(data[3]);
-                Double price = Double.parseDouble(data[4]);
+                double area = Double.parseDouble(data[3]);
+                double price = Double.parseDouble(data[4]);
 
                 // Insert property data into struct
                 Property p = new Property(data[1], data[2], area, price, geometry,
@@ -132,17 +127,13 @@ public class PropertiesLoader {
                     mapMunicipioToFreguesia.get(data[8]).add(data[7]);
 
                 // Add do dictionary <Freguesia, List<Property>>
-                if (propertiesByParish.containsKey(data[7]))
-                    propertiesByParish.get(data[7]).add(p); // Adicionar no mapa da freguesia
-                else {
-                    List<Property> list = new ArrayList<>();
-                    list.add(p);
-                    propertiesByParish.put(data[7], list);
-                }
+                propertiesByParish.computeIfAbsent(data[7], k -> new ArrayList<>()).add(p);
+                propertiesByCounty.computeIfAbsent(data[8], k -> new ArrayList<>()).add(p);
+                propertiesByIsland.computeIfAbsent(data[9], k -> new ArrayList<>()).add(p);
 
             }
         } catch (NumberFormatException | ParseException | FileNotFoundException e) {
-            System.err.println("Error occurred while reading properties from csv" + e.getMessage());
+            throw new IllegalStateException("Something went wrong while initializing PropertiesLoader: " + e);
         }
     }
 
@@ -216,7 +207,7 @@ public class PropertiesLoader {
                 .toList();
     }
     private void calculateTrades() {
-        this.trades = TradeService_MR.getTradesList(owners.values().stream().toList());
+        this.trades = TradeService.getTradesList(owners.values().stream().toList());
     }
 
     // Return a trades list based on the current criteria and value on the loading options array
@@ -229,18 +220,18 @@ public class PropertiesLoader {
 
         List<Trade> filteredTrades = switch (criteria) {
             case "ilha" -> trades.stream()
-                    .filter(t -> t.getOwner1Property().getIlha().equals(value) &&
-                            t.getOwner2Property().getIlha().equals(value))
+                    .filter(t -> t.getOwner1Property().getIsland().equals(value) &&
+                            t.getOwner2Property().getIsland().equals(value))
                     .toList();
 
             case "concelho" -> trades.stream()
-                    .filter(t -> t.getOwner1Property().getMunicipio().equals(value) &&
-                            t.getOwner2Property().getMunicipio().equals(value))
+                    .filter(t -> t.getOwner1Property().getCounty().equals(value) &&
+                            t.getOwner2Property().getCounty().equals(value))
                     .toList();
 
             case "freguesia" -> trades.stream()
-                    .filter(t -> t.getOwner1Property().getFreguesia().equals(value) &&
-                            t.getOwner2Property().getFreguesia().equals(value))
+                    .filter(t -> t.getOwner1Property().getParish().equals(value) &&
+                            t.getOwner2Property().getParish().equals(value))
                     .toList();
 
             default -> null;
@@ -264,7 +255,7 @@ public class PropertiesLoader {
 
     public void setLoadingOptions(String[] options){
         checkLocked();
-        if(!"proprietariosfreguesiaconcelhoilha".toLowerCase().contains(options[0].toLowerCase()))
+        if(!"proprietariosfreguesiaconcelhoilha".toLowerCase().contains(options[0].toLowerCase())) // maybe change for a more predefined way
             throw new IllegalArgumentException("Criterio inserido não é valido.");
 
         this.loadingOptions = options;
