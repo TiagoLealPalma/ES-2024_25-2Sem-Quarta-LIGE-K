@@ -7,6 +7,10 @@ import org.w3c.dom.Document;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
 import java.io.FileWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 import java.util.List;
 
 public class SVGGenerator {
@@ -19,7 +23,7 @@ public class SVGGenerator {
         // Canvas com resolução aumentada
         int width = 1050;
         int height = 700;
-
+        svgGenerator.setSVGCanvasSize(new Dimension(width, height));
 
         // Normaliza coordenadas
         double minX = properties.stream().mapToDouble(SimplerProperty::getX).min().orElse(0);
@@ -35,8 +39,8 @@ public class SVGGenerator {
             double normY = (p.getY() - minY) * scaleY;
 
             boolean pertenceFiltro =
-                    (munincipio == "null" && freguesia == "null") ||
-                            (freguesia == "null" && p.getCounty().contains(munincipio)) ||
+                    ("null".equals(munincipio) && "null".equals(freguesia)) ||
+                            ("null".equals(freguesia) && p.getCounty().contains(munincipio)) ||
                             p.getParish().contains(freguesia);
 
             if (pertenceFiltro) {
@@ -54,12 +58,26 @@ public class SVGGenerator {
         }
 
         if (freguesia == null) freguesia = "null";
+        if (munincipio == null) munincipio = "null";
 
-        System.err.println("A escrever o ficheiro: src/main/resources/META-INF/resources/svgs/" + munincipio + "-" + freguesia + ".svg");
+        String filePath = "src/main/resources/META-INF/resources/svgs/" + munincipio + "-" + freguesia + ".svg";
+
+        System.err.println("A escrever o ficheiro: " + filePath);
 
         // Guarda como ficheiro SVG
-        try (FileWriter out = new FileWriter("src/main/resources/META-INF/resources/svgs/" + munincipio + "-" + freguesia + ".svg")) {
+        try (Writer out = new FileWriter(filePath)) {
             svgGenerator.stream(out);
+        }
+
+        // Adiciona viewBox manualmente ao SVG depois de o gerar
+        Path svgPath = Paths.get(filePath);
+        Charset charset = StandardCharsets.UTF_8;
+
+        String content = Files.readString(svgPath, charset);
+
+        if (!content.contains("viewBox")) {
+            content = content.replaceFirst("<svg", "<svg viewBox=\"0 0 " + width + " " + height + "\"");
+            Files.writeString(svgPath, content, charset);
         }
     }
 }

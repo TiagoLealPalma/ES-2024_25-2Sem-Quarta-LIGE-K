@@ -322,6 +322,10 @@ public class PropertiesLoader {
 
     public static void main(String[] args) {
         PropertiesLoader p = new PropertiesLoader();
-
+        try {
+            p.buildSVG();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

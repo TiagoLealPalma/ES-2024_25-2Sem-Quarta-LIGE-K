@@ -84,7 +84,6 @@ import '@vaadin/vaadin-lumo-styles/style.js';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import 'Frontend/graph-viewer.js';
 import 'Frontend/landing.js';
-import 'Frontend/leaflet-map-viewer.js';
 import 'Frontend/newLanding.js';
 const loadOnDemand = (key) => { return Promise.resolve(0); }
 window.Vaadin = window.Vaadin || {};

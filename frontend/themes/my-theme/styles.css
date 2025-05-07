@@ -27,47 +27,38 @@ html, body {
 /* NEW LANDING PAGE */
 
 .titulo1{
-    position: absolute;
-    top: 2rem;
+    position: relative;
+    top: 1rem;
     font-size: 4rem;
     font-weight: bolder;
     color: #F66435;
 }
 
 .landing-graph-area {
-    height: 800px;
+    height: 50vh;
     width: 90vw;
     position: relative;
-    grid-template-columns: 1.5fr 3fr 1fr;
-    justify-content: center;
-    padding: 2rem;
-    margin: 6.5rem 4rem 0rem;
+    margin: 0.5rem;
 }
 
 .landing-graph-area img {
-    grid-row: 1;
-    grid-column: 2;
     max-width: 100%;
-    width: 100% !important;
+    width: auto;
     height: 100%;
     z-index: 1;
     opacity: 0;
     transition: opacity 1s ease-in-out;
-    margin-left: 25rem !important;
+    left: 19rem;
 }
 
 .graph-image {
     position: absolute;
-    top: 0;
-    left: 0;
-    max-width: 100%;
-    width: 600px !important;
-    height: 100%;
     z-index: 1;
     opacity: 0;
     transition: opacity 1s ease-in-out;
-    margin-left: 6rem !important;
 }
+
+
 
 .landing-criteria{
     height: 30vh;
@@ -147,8 +138,8 @@ html, body {
     background-color: #0f1117;
     height: 100vh;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: space-between;
 }
 
 .conteudo-wrapper {
