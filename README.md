@@ -61,7 +61,7 @@ Este projeto foi desenvolvido no âmbito da unidade curricular de **Engenharia d
 ---
 
 ## 📁 Estrutura do Projeto
-
+```
 Terrain-Fragmentation-Helper
 ├── frontend/                    # Interface e visualização (Vaadin/JS)
 │   └── themes/                  # Tema visual personalizado (CSS)
@@ -89,7 +89,7 @@ Terrain-Fragmentation-Helper
       ├── **documentation/**
       ├── **tests-and-quality-assurance/**
       └── **trello/**
-          
+```          
 
 ---
 
