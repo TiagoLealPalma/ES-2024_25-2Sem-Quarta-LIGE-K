@@ -128,7 +128,7 @@ A documentação técnica do projeto foi gerada automaticamente com JavaDoc e en
 
 ## 🎥 Vídeo de Demonstração
 
-📺 Link para o vídeo no YouTube: [TODO INSERIR LINK AQUI]
+📺 Link para o vídeo no YouTube: https://youtu.be/fU-ICmFsbWs
 
 O vídeo demonstra:
 - A gestão ágil do projeto (Scrum)
