@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Trade.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Terrain-Fragmentation-Helper</a> &gt; <a href="index.source.html" class="el_package">iscte.lige.k.dataStructures</a> &gt; <span class="el_source">Trade.java</span></div><h1>Trade.java</h1><pre class="source lang-java linenums">package iscte.lige.k.dataStructures;
+
+import iscte.lige.k.util.TradeEval;
+
+import java.util.Objects;
+
+/**
+ * Represents a land trade between two owners, each exchanging one property.
+ * Evaluates the trade's score and determines the &quot;main&quot; property of each owner —
+ * the one to which the acquired property will be merged.
+ *
+ * Trades can be compared, scored, and evaluated for validity (must have neighboring links).
+ */
+public class Trade implements Comparable&lt;Trade&gt; {
+    private final Owner owner1;
+    private final Owner owner2;
+    private final Property owner1Property;
+    private final Property owner2Property;
+    private final Property owner1MainProperty; // Main property for owner1 after trade
+    private final Property owner2MainProperty; // Main property for owner2 after trade
+
+<span class="fc" id="L22">    private int score = -1;</span>
+    private final double totalAreaBeingTraded;
+
+    /**
+     * Creates a new Trade between two owners involving one property from each.
+     * Automatically evaluates the trade and finds the main properties for merging.
+     *
+     * @param owner1 first owner
+     * @param owner2 second owner
+     * @param p1 property from owner1 to be traded
+     * @param p2 property from owner2 to be traded
+     * @throws IllegalStateException if no valid &quot;main&quot; properties can be found for merging
+     */
+<span class="fc" id="L35">    public Trade(Owner owner1, Owner owner2, Property p1, Property p2) {</span>
+<span class="fc" id="L36">        this.owner1 = owner1;</span>
+<span class="fc" id="L37">        this.owner2 = owner2;</span>
+<span class="fc" id="L38">        this.owner1Property = p1;</span>
+<span class="fc" id="L39">        this.owner2Property = p2;</span>
+<span class="fc" id="L40">        this.totalAreaBeingTraded = p1.getArea() + p2.getArea();</span>
+
+        // Score is computed externally via static evaluator
+<span class="fc" id="L43">        TradeEval.evaluateTrade(this);</span>
+
+        // Find the property owned by owner1 that is adjacent to p2 (and vice-versa)
+<span class="fc" id="L46">        this.owner1MainProperty = findMainProperty(owner1, p2);</span>
+<span class="fc" id="L47">        this.owner2MainProperty = findMainProperty(owner2, p1);</span>
+
+        // Check if the trade is valid (main properties must exist and be different from the traded ones)
+<span class="pc bpc" id="L50" title="3 of 8 branches missed.">        if (owner1MainProperty == null || owner2MainProperty == null ||</span>
+                owner1Property == owner2MainProperty || owner2Property == owner1MainProperty) {
+<span class="fc" id="L52">            throw new IllegalStateException(&quot;No main property found: &quot; +</span>
+                    &quot;Owner1MainProperty = &quot; + owner1MainProperty +
+                    &quot;, Owner2MainProperty = &quot; + owner2MainProperty);
+        }
+<span class="fc" id="L56">    }</span>
+
+    /**
+     * Finds a property owned by {@code ownerGettingTheProperty} that is a neighbor
+     * of {@code propertyGettingMerged}.
+     *
+     * @param ownerGettingTheProperty owner who would receive the property
+     * @param propertyGettingMerged property being merged into the owner's set
+     * @return the neighboring property owned by the owner, or null if none found
+     */
+    private Property findMainProperty(Owner ownerGettingTheProperty, Property propertyGettingMerged) {
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        for (Property property : propertyGettingMerged.getNeighbourProperties()) {</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">            if (property.getOwner().equals(ownerGettingTheProperty))</span>
+<span class="fc" id="L69">                return property;</span>
+<span class="fc" id="L70">        }</span>
+<span class="fc" id="L71">        return null;</span>
+    }
+
+    /**
+     * Sets the trade's evaluation score.
+     * @param score integer score assigned to this trade
+     */
+    public void setScore(int score) {
+<span class="fc" id="L79">        this.score = score;</span>
+<span class="fc" id="L80">    }</span>
+
+    /**
+     * Determines if two trades are equal, regardless of the order of participants.
+     * A trade is equal if the same properties and owners are involved.
+     *
+     * @param obj the other trade
+     * @return true if both trades are considered equivalent
+     */
+    @Override
+    public boolean equals(Object obj) {
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        if (this == obj) return true;</span>
+<span class="pc bpc" id="L92" title="2 of 4 branches missed.">        if (obj == null || getClass() != obj.getClass()) return false;</span>
+
+<span class="fc" id="L94">        Trade other = (Trade) obj;</span>
+
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        boolean sameOrder = owner1.getName().equals(other.getOwner1().getName()) &amp;&amp;</span>
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">                owner2.getName().equals(other.getOwner2().getName()) &amp;&amp;</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">                Objects.equals(owner1Property.getParcelaId(), other.getOwner1Property().getParcelaId()) &amp;&amp;</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">                Objects.equals(owner2Property.getParcelaId(), other.getOwner2Property().getParcelaId());</span>
+
+<span class="fc bfc" id="L101" title="All 2 branches covered.">        boolean swappedOrder = owner1.getName().equals(other.getOwner2().getName()) &amp;&amp;</span>
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">                owner2.getName().equals(other.getOwner1().getName()) &amp;&amp;</span>
+<span class="pc bpc" id="L103" title="1 of 2 branches missed.">                Objects.equals(owner1Property.getParcelaId(), other.getOwner2Property().getParcelaId()) &amp;&amp;</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">                Objects.equals(owner2Property.getParcelaId(), other.getOwner1Property().getParcelaId());</span>
+
+<span class="pc bpc" id="L106" title="1 of 4 branches missed.">        return sameOrder || swappedOrder;</span>
+    }
+
+    /**
+     * Computes a hash code for the trade using parcel IDs,
+     * ensuring equal trades (regardless of order) get the same hash.
+     *
+     * @return consistent hash code
+     */
+    @Override
+    public int hashCode() {
+<span class="fc" id="L117">        int parcel1 = (int) Double.parseDouble(owner1Property.getParcelaId());</span>
+<span class="fc" id="L118">        int parcel2 = (int) Double.parseDouble(owner2Property.getParcelaId());</span>
+
+<span class="fc" id="L120">        return Objects.hash(</span>
+<span class="fc" id="L121">                Math.min(parcel1, parcel2),</span>
+<span class="fc" id="L122">                Math.max(parcel1, parcel2));</span>
+    }
+
+    /**
+     * Compares two trades based on score (higher is better), breaking ties
+     * by favoring larger total traded area.
+     *
+     * @param otherTrade the trade to compare with
+     * @return comparison result for sorting
+     */
+    @Override
+    public int compareTo(Trade otherTrade) {
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        if (this.score == otherTrade.getScore()) {</span>
+<span class="fc" id="L135">            return -Double.compare(this.totalAreaBeingTraded, otherTrade.getTotalArea());</span>
+        } else {
+<span class="fc" id="L137">            return -Integer.compare(this.score, otherTrade.getScore());</span>
+        }
+    }
+
+    // Getters
+
+    /**
+     * Gets the total area being exchanged in this trade.
+     * @return total area
+     */
+    public double getTotalArea() {
+<span class="fc" id="L148">        return totalAreaBeingTraded;</span>
+    }
+
+    /**
+     * Gets the score assigned to this trade.
+     * @return trade score
+     */
+    public int getScore() {
+<span class="fc" id="L156">        return this.score;</span>
+    }
+
+    /**
+     * Gets the first owner in this trade.
+     * @return owner1
+     */
+    public Owner getOwner1() {
+<span class="fc" id="L164">        return owner1;</span>
+    }
+
+    /**
+     * Gets the second owner in this trade.
+     * @return owner2
+     */
+    public Owner getOwner2() {
+<span class="fc" id="L172">        return owner2;</span>
+    }
+
+    /**
+     * Gets the property owned by owner1 that is being traded.
+     * @return property from owner1
+     */
+    public Property getOwner1Property() {
+<span class="fc" id="L180">        return owner1Property;</span>
+    }
+
+    /**
+     * Gets the property owned by owner2 that is being traded.
+     * @return property from owner2
+     */
+    public Property getOwner2Property() {
+<span class="fc" id="L188">        return owner2Property;</span>
+    }
+
+    /**
+     * Gets the property from owner1 that will be merged with the incoming property.
+     * @return owner1's main property
+     */
+    public Property getOwner1MainProperty() {
+<span class="fc" id="L196">        return owner1MainProperty;</span>
+    }
+
+    /**
+     * Gets the property from owner2 that will be merged with the incoming property.
+     * @return owner2's main property
+     */
+    public Property getOwner2MainProperty() {
+<span class="fc" id="L204">        return owner2MainProperty;</span>
+    }
+
+    /**
+     * Gets the sum of the areas of both properties being traded.
+     * @return sum of the areas
+     */
+    public double getTotalAreaBeingTraded() {
+<span class="fc" id="L212">        return totalAreaBeingTraded;</span>
+    }
+
+    /**
+     * Returns a string summary of the trade, showing both owners and traded parcel IDs.
+     * @return string representation of the trade
+     */
+    @Override
+    public String toString() {
+<span class="fc" id="L221">        return owner1.getName() + &quot;: &quot; + owner1Property.getParcelaId()</span>
+                + &quot; &lt;-&gt; &quot; +
+<span class="fc" id="L223">                owner2.getName() + &quot;: &quot; + owner2Property.getParcelaId();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Owner.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Terrain-Fragmentation-Helper</a> &gt; <a href="index.source.html" class="el_package">iscte.lige.k.dataStructures</a> &gt; <span class="el_source">Owner.java</span></div><h1>Owner.java</h1><pre class="source lang-java linenums">package iscte.lige.k.dataStructures;
+
+import org.locationtech.jts.geom.Geometry;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Represents a property owner, allowing the registration of properties
+ * and the calculation of average land area, automatically grouping
+ * adjacent properties.
+ */
+public class Owner {
+    private String name;
+    private List&lt;Property&gt; properties;
+    private Double avgArea;
+
+    /**
+     * Helper inner class representing a group of adjacent properties,
+     * combining their area and geometry.
+     */
+    private class Area {
+        double area;
+        Geometry geometry;
+<span class="fc" id="L25">        List&lt;String&gt; parcelas = new ArrayList&lt;&gt;();</span>
+
+        /**
+         * Constructs a new Area from a single property.
+         * @param property the property used to initialize the area
+         */
+<span class="fc" id="L31">        Area(Property property) {</span>
+<span class="fc" id="L32">            area = property.getArea();</span>
+<span class="fc" id="L33">            geometry = property.getGeometry();</span>
+<span class="fc" id="L34">            parcelas.add(property.getParcelaId());</span>
+<span class="fc" id="L35">        }</span>
+
+        /**
+         * Adds a property to the current area, updating the total area
+         * and uniting the geometry.
+         * @param property the property to add
+         */
+        public void addArea(Property property) {
+<span class="fc" id="L43">            area += property.getArea();</span>
+<span class="fc" id="L44">            geometry.union(property.getGeometry());</span>
+<span class="fc" id="L45">            parcelas.add(property.getParcelaId());</span>
+<span class="fc" id="L46">        }</span>
+    }
+
+    /**
+     * Constructs an owner with no properties initially.
+     * @param name the owner's name
+     */
+<span class="fc" id="L53">    public Owner(String name) {</span>
+<span class="fc" id="L54">        this.name = name;</span>
+<span class="fc" id="L55">        this.properties = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L56">    }</span>
+
+    /**
+     * Constructs an owner with an initial property.
+     * @param name the owner's name
+     * @param property the initial property
+     */
+<span class="fc" id="L63">    public Owner(String name, Property property) {</span>
+<span class="fc" id="L64">        this.name = name;</span>
+<span class="fc" id="L65">        this.properties = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L66">        this.properties.add(property);</span>
+<span class="fc" id="L67">    }</span>
+
+    /**
+     * Adds a property to the owner's property list.
+     * @param property the property to add
+     * @throws IllegalArgumentException if the property is null
+     */
+    public void addProperty(Property property) {
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (property == null)</span>
+<span class="fc" id="L76">            throw new IllegalArgumentException(&quot;Property cannot be null&quot;);</span>
+
+<span class="fc" id="L78">        properties.add(property);</span>
+<span class="fc" id="L79">    }</span>
+
+    /**
+     * Calculates the average area of the owner's properties. Adjacent properties
+     * (touching or intersecting) are merged and treated as a single unit.
+     * @return the average area (including merged groups)
+     */
+    public double calculateAvgArea() {
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if (avgArea != null) return avgArea;</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        if (properties.isEmpty()) return 0;</span>
+
+<span class="fc" id="L90">        List&lt;Property&gt; uniqueProperties = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L91">        List&lt;Area&gt; jointProperties = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L92">        List&lt;Integer&gt; notUnique = new ArrayList&lt;&gt;();</span>
+
+        // Iterate through all properties to group adjacent ones
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        for (int i = 0; i &lt; properties.size(); i++) {</span>
+<span class="fc" id="L96">            Area areaToEvaluate = null;</span>
+
+            // Check if this property is already part of an existing group
+<span class="fc bfc" id="L99" title="All 2 branches covered.">            for (Area area : jointProperties) {</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">                if (area.parcelas.contains(properties.get(i).getParcelaId())) {</span>
+<span class="fc" id="L101">                    areaToEvaluate = area;</span>
+                }
+<span class="fc" id="L103">            }</span>
+
+            // If not yet grouped, start a new group with this property
+<span class="fc bfc" id="L106" title="All 2 branches covered.">            if (areaToEvaluate == null) {</span>
+<span class="fc" id="L107">                areaToEvaluate = new Area(properties.get(i));</span>
+            }
+
+            // Save current area value to check later if it was changed
+<span class="fc" id="L111">            double temp = areaToEvaluate.area;</span>
+
+            // Try to merge with other properties that are adjacent
+<span class="fc bfc" id="L114" title="All 2 branches covered.">            for (int j = 0; j &lt; properties.size(); j++) {</span>
+<span class="fc" id="L115">                Property property = properties.get(j);</span>
+
+                // Skip if already included in this group
+<span class="fc bfc" id="L118" title="All 2 branches covered.">                if (areaToEvaluate.parcelas.contains(property.getParcelaId()))</span>
+<span class="fc" id="L119">                    continue;</span>
+
+                // Merge if properties are adjacent
+<span class="fc bfc" id="L122" title="All 2 branches covered.">                if (areaToEvaluate.geometry.touches(property.getGeometry()) ||</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">                        areaToEvaluate.geometry.intersects(property.getGeometry())) {</span>
+
+<span class="fc" id="L125">                    areaToEvaluate.addArea(property);</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">                    if (!notUnique.contains(i)) notUnique.add(i);</span>
+<span class="fc" id="L127">                    notUnique.add(j);</span>
+                }
+            }
+
+            // If the area has changed, add it to the list of joint groups
+<span class="fc bfc" id="L132" title="All 2 branches covered.">            if (temp != areaToEvaluate.area) {</span>
+<span class="pc bpc" id="L133" title="1 of 2 branches missed.">                if (!jointProperties.contains(areaToEvaluate))</span>
+<span class="fc" id="L134">                    jointProperties.add(areaToEvaluate);</span>
+            }
+        }
+
+        // Properties not merged are treated as individual (unique) properties
+<span class="fc bfc" id="L139" title="All 2 branches covered.">        for (int i = 0; i &lt; properties.size(); i++) {</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">            if (!notUnique.contains(i))</span>
+<span class="fc" id="L141">                uniqueProperties.add(properties.get(i));</span>
+        }
+
+        // Sum the areas
+<span class="fc" id="L145">        double sum = 0;</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        for (Property property : uniqueProperties) {</span>
+<span class="fc" id="L147">            sum += property.getArea();</span>
+<span class="fc" id="L148">        }</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        for (Area area : jointProperties) {</span>
+<span class="fc" id="L150">            sum += area.area;</span>
+<span class="fc" id="L151">        }</span>
+
+<span class="fc" id="L153">        this.avgArea = sum / (uniqueProperties.size() + jointProperties.size());</span>
+        // Compute the average
+<span class="fc" id="L155">        return avgArea;</span>
+    }
+
+    /**
+     * Gets the owner's name.
+     * @return the name
+     */
+    public String getName() {
+<span class="fc" id="L163">        return name;</span>
+    }
+
+    /**
+     * Returns the list of properties.
+     * @return list of properties
+     */
+    public List&lt;Property&gt; getProperties() {
+<span class="fc" id="L171">        return properties;</span>
+    }
+
+    /**
+     * Returns the number of registered properties.
+     * @return property count
+     */
+    public int getNumOfProperties() {
+<span class="fc" id="L179">        return properties.size();</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="fc" id="L184">        return &quot;Owner{&quot; +</span>
+                &quot;name='&quot; + name + '\'' +
+<span class="fc" id="L186">                &quot;, numOfProperties=&quot; + properties.size() +</span>
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GraphViewerComponent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Terrain-Fragmentation-Helper</a> &gt; <a href="index.source.html" class="el_package">iscte.lige.k.views</a> &gt; <span class="el_source">GraphViewerComponent.java</span></div><h1>GraphViewerComponent.java</h1><pre class="source lang-java linenums">package iscte.lige.k.views;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.html.Div;
+import iscte.lige.k.dataStructures.Owner;
+import iscte.lige.k.service.PropertiesLoader;
+import iscte.lige.k.dataStructures.Property;
+
+import java.util.*;
+
+@Tag(&quot;graph-viewer&quot;)
+@JsModule(&quot;./graph-viewer.js&quot;)
+public class GraphViewerComponent extends Div {
+    Runnable onGraphLoadedCallback;
+
+<span class="nc" id="L20">    public GraphViewerComponent() {</span>
+        // JS will call @ClientCallable to ask for the data after displaying loading screen
+<span class="nc" id="L22">        System.err.println(&quot;GraphViewerComponent initialized. Awaiting JS request...&quot;);</span>
+<span class="nc" id="L23">    }</span>
+
+
+    @ClientCallable
+    public void graphFinishedLoading() {
+<span class="nc" id="L28">        System.err.println(&quot;Graph loaded on JS&quot;);</span>
+<span class="nc bnc" id="L29" title="All 2 branches missed.">        if (onGraphLoadedCallback != null) {</span>
+<span class="nc" id="L30">            onGraphLoadedCallback.run();</span>
+        }
+<span class="nc" id="L32">    }</span>
+
+    public void onGraphLoaded(Runnable callback) {
+<span class="nc" id="L35">        this.onGraphLoadedCallback = callback;</span>
+<span class="nc" id="L36">    }</span>
+
+    // Method called from JS
+    @ClientCallable
+    public void startLoadingOnServer() {
+<span class="nc" id="L41">        System.err.println(&quot;Data requested from client. Loading graph...&quot;);</span>
+<span class="nc" id="L42">        PropertiesLoader loader = PropertiesLoader.getInstance();</span>
+<span class="nc" id="L43">        JsonObject json = null;</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        if (Objects.equals(loader.getLoadingOptions()[0], &quot;Proprietarios&quot;))</span>
+<span class="nc" id="L45">            json = buildGraphData(loader.getOwners(), loader.getOwnerRelationships());</span>
+<span class="nc" id="L46">        else json = buildGraphData(loader.getPropertiesWithNeighbours());</span>
+<span class="nc" id="L47">        System.err.println(&quot;Sending graph to JS...&quot;);</span>
+<span class="nc" id="L48">        getElement().setAttribute(&quot;graphData&quot;, json.toString());</span>
+
+<span class="nc" id="L50">    }</span>
+
+    public JsonObject buildGraphData(List&lt;Property&gt; properties) {
+<span class="nc bnc" id="L53" title="All 4 branches missed.">        if (properties == null || properties.isEmpty()) {</span>
+<span class="nc" id="L54">            throw new IllegalArgumentException(&quot;List of properties is null or empty&quot;);</span>
+        }
+
+<span class="nc" id="L57">        JsonArray nodes = new JsonArray();</span>
+<span class="nc" id="L58">        JsonArray edges = new JsonArray();</span>
+<span class="nc" id="L59">        Set&lt;String&gt; addedNodes = new HashSet&lt;&gt;();</span>
+
+<span class="nc" id="L61">        System.err.println(&quot;\nCreating nodes... (&quot; + properties.size() + &quot; properties to evaluate, sorry for the delay :) )&quot;);</span>
+        // Insert all nodes before checking connections
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        for (Property p : properties) {</span>
+<span class="nc" id="L64">            String id = p.getParcelaId();</span>
+
+<span class="nc bnc" id="L66" title="All 2 branches missed.">            if (addedNodes.add(id)) {</span>
+<span class="nc" id="L67">                JsonObject node = new JsonObject();</span>
+<span class="nc" id="L68">                node.addProperty(&quot;id&quot;, id);</span>
+<span class="nc" id="L69">                node.addProperty(&quot;label&quot;, p.getOwner().getName());</span>
+
+<span class="nc" id="L71">                node.addProperty(&quot;value&quot;, (int) Math.log(p.getArea())); // este valor será usado para calcular o tamanho</span>
+
+                // Info that appears whenever the node is hovered
+<span class="nc" id="L74">                node.addProperty(&quot;title&quot;, &quot;Parcela: &quot; + p.getParcelaId() + &quot;\nÁrea: &quot; + p.getArea() + &quot; m²\nFreguesia: &quot; + p.getParish());</span>
+<span class="nc" id="L75">                nodes.add(node);</span>
+<span class="nc" id="L76">            } else</span>
+<span class="nc" id="L77">                System.err.println(&quot;DEBUG: Erro na construção de nodes (Propriedades duplicadas)&quot;);</span>
+<span class="nc" id="L78">        }</span>
+
+<span class="nc" id="L80">        System.err.println(&quot;Creating edges...&quot;);</span>
+<span class="nc" id="L81">        List&lt;String&gt; addedEdges = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        for (Property p : properties) {</span>
+<span class="nc" id="L83">            String id = p.getParcelaId();</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">            for (Property neighbor : p.getNeighbourProperties()) {</span>
+<span class="nc" id="L85">                String nid = neighbor.getParcelaId();</span>
+
+<span class="nc bnc" id="L87" title="All 2 branches missed.">                if (addedNodes.add(nid)) { // Se não foi inserida</span>
+<span class="nc" id="L88">                    System.err.println(&quot;Propriedade &quot; + neighbor.getParcelaId() + &quot; não adicionada nao primeira volta,&quot; +</span>
+                            &quot; mas referenciada como vizinha (Verificar construção de vizinhos)&quot;);
+
+                    // Still adds the node so it doesn't stop the graph execution
+<span class="nc" id="L92">                    JsonObject neighborNode = new JsonObject();</span>
+<span class="nc" id="L93">                    neighborNode.addProperty(&quot;id&quot;, nid);</span>
+<span class="nc" id="L94">                    neighborNode.addProperty(&quot;label&quot;, neighbor.getOwner().getName());</span>
+<span class="nc" id="L95">                    nodes.add(neighborNode);</span>
+                }
+
+<span class="nc bnc" id="L98" title="All 2 branches missed.">                String edgeKey = id.compareTo(nid) &lt; 0 ? id + &quot;-&quot; + nid : nid + &quot;-&quot; + id;</span>
+
+                // Verifies if it was already added, only adds if not
+<span class="nc bnc" id="L101" title="All 2 branches missed.">                if (!addedEdges.contains(edgeKey)) {</span>
+<span class="nc" id="L102">                    addedEdges.add(edgeKey);</span>
+
+<span class="nc" id="L104">                    JsonObject edge = new JsonObject();</span>
+<span class="nc" id="L105">                    edge.addProperty(&quot;from&quot;, id);</span>
+<span class="nc" id="L106">                    edge.addProperty(&quot;to&quot;, nid);</span>
+<span class="nc" id="L107">                    edges.add(edge);</span>
+                }
+<span class="nc" id="L109">            }</span>
+<span class="nc" id="L110">        }</span>
+
+<span class="nc" id="L112">        JsonObject graph = new JsonObject();</span>
+<span class="nc" id="L113">        graph.add(&quot;nodes&quot;, nodes);</span>
+<span class="nc" id="L114">        graph.add(&quot;edges&quot;, edges);</span>
+
+<span class="nc" id="L116">        return graph;</span>
+    }
+
+    public JsonObject buildGraphData(Map&lt;Integer, Owner&gt; owners, Map&lt;Owner, Map&lt;Owner, Integer&gt;&gt; relations) {
+
+<span class="nc" id="L121">        JsonArray nodes = new JsonArray();</span>
+<span class="nc" id="L122">        JsonArray edges = new JsonArray();</span>
+<span class="nc" id="L123">        Set&lt;String&gt; addedNodes = new HashSet&lt;&gt;();</span>
+
+<span class="nc" id="L125">        System.err.println(&quot;\nCreating nodes... (&quot; + owners.size() + &quot; properties to evaluate, sorry for the delay :) )&quot;);</span>
+        // Insert all nodes before checking connections
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        for (Integer identifier : owners.keySet()) {</span>
+<span class="nc" id="L128">            String id = identifier.toString();</span>
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">            if (addedNodes.add(id)) {</span>
+<span class="nc" id="L131">                JsonObject node = new JsonObject();</span>
+<span class="nc" id="L132">                node.addProperty(&quot;id&quot;, id);</span>
+<span class="nc" id="L133">                node.addProperty(&quot;label&quot;, id);</span>
+
+
+<span class="nc" id="L136">                double avgArea = owners.get(identifier).calculateAvgArea();</span>
+
+<span class="nc" id="L138">                node.addProperty(&quot;value&quot;, (int) Math.log(avgArea)); // este valor será usado para calcular o tamanho</span>
+
+                // Info that appears whenever the node is hovered
+<span class="nc" id="L141">                node.addProperty(&quot;title&quot;, &quot;Identificador: &quot; + identifier + &quot;\nÁrea Média: &quot; + avgArea + &quot; m²\nNº de Propriedades: &quot; + owners.get(identifier).getNumOfProperties());</span>
+<span class="nc" id="L142">                nodes.add(node);</span>
+<span class="nc" id="L143">            } else</span>
+<span class="nc" id="L144">                System.err.println(&quot;DEBUG: Erro na construção de nodes (Propriedades duplicadas)&quot;);</span>
+<span class="nc" id="L145">        }</span>
+
+<span class="nc" id="L147">        System.err.println(&quot;Creating edges...&quot;);</span>
+<span class="nc" id="L148">        List&lt;String&gt; addedEdges = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">        for (Owner owner : owners.values()) {</span>
+<span class="nc" id="L150">            String id = owner.getName();</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">            for (Owner otherOwner: relations.get(owner).keySet()) {</span>
+<span class="nc" id="L152">                String otherId = otherOwner.getName();</span>
+
+<span class="nc bnc" id="L154" title="All 2 branches missed.">                if (addedNodes.add(otherId)) { // Se não foi inserida</span>
+
+<span class="nc" id="L156">                    System.err.println(&quot;Algo de errado ocorreu a construir os owners, deveriam ter sido inseridos antes de chegarem aqui:&quot; + otherId);</span>
+                }
+
+<span class="nc bnc" id="L159" title="All 2 branches missed.">                String edgeKey = id.compareTo(otherId) &lt; 0 ? id + &quot;-&quot; + otherId : otherId + &quot;-&quot; + id;</span>
+
+                // Verifies if it was already added, only adds if not
+<span class="nc bnc" id="L162" title="All 2 branches missed.">                if (!addedEdges.contains(edgeKey)) {</span>
+<span class="nc" id="L163">                    addedEdges.add(edgeKey);</span>
+
+<span class="nc" id="L165">                    JsonObject edge = new JsonObject();</span>
+<span class="nc" id="L166">                    edge.addProperty(&quot;from&quot;, id);</span>
+<span class="nc" id="L167">                    edge.addProperty(&quot;to&quot;, otherId);</span>
+
+<span class="nc" id="L169">                    edges.add(edge);</span>
+                }
+<span class="nc" id="L171">            }</span>
+<span class="nc" id="L172">        }</span>
+
+<span class="nc" id="L174">        JsonObject graph = new JsonObject();</span>
+<span class="nc" id="L175">        graph.add(&quot;nodes&quot;, nodes);</span>
+<span class="nc" id="L176">        graph.add(&quot;edges&quot;, edges);</span>
+
+<span class="nc" id="L178">        return graph;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

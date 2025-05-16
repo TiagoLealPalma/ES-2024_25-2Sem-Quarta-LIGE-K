@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NewLandingPage.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Terrain-Fragmentation-Helper</a> &gt; <a href="index.source.html" class="el_package">iscte.lige.k.views</a> &gt; <span class="el_source">NewLandingPage.java</span></div><h1>NewLandingPage.java</h1><pre class="source lang-java linenums">package iscte.lige.k.views;
+
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLink;
+import iscte.lige.k.service.PropertiesLoader;
+import com.google.gson.*;
+
+import java.util.List;
+
+
+@Route(&quot;&quot;)
+@JsModule(&quot;./newLanding.js&quot;)
+public class NewLandingPage extends VerticalLayout {
+
+<span class="nc" id="L23">    private final Gson gson = new Gson();</span>
+<span class="nc" id="L24">    private ComboBox&lt;String&gt; ilhasDropdown = new ComboBox&lt;&gt;();</span>
+<span class="nc" id="L25">    private ComboBox&lt;String&gt; concelhosDropdown = new ComboBox&lt;&gt;();</span>
+<span class="nc" id="L26">    private ComboBox&lt;String&gt; freguesiasDropdown = new ComboBox&lt;&gt;();</span>
+
+
+<span class="nc" id="L29">    private final PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();</span>
+
+<span class="nc" id="L31">    public NewLandingPage() {</span>
+
+<span class="nc" id="L33">        addClassName(&quot;landing-view&quot;);</span>
+<span class="nc" id="L34">        setSizeFull();</span>
+
+        // Título
+<span class="nc" id="L37">        H1 titulo = new H1(&quot;Gestão do Território&quot;);</span>
+<span class="nc" id="L38">        titulo.addClassName(&quot;titulo1&quot;);</span>
+
+        // Dropdowns
+<span class="nc" id="L41">        ilhasDropdown = new ComboBox&lt;&gt;(&quot;Ilha&quot;);</span>
+<span class="nc" id="L42">        concelhosDropdown = new ComboBox&lt;&gt;(&quot;Concelho&quot;);</span>
+<span class="nc" id="L43">        freguesiasDropdown = new ComboBox&lt;&gt;(&quot;Freguesia&quot;);</span>
+
+        // Adicionar dados
+<span class="nc" id="L46">        List&lt;String&gt; ilhas = propertiesLoader.getIslands();</span>
+<span class="nc" id="L47">        List&lt;String&gt; concelhos = propertiesLoader.getCounties();</span>
+<span class="nc" id="L48">        List&lt;String&gt; freguesias = propertiesLoader.getParishes();</span>
+
+<span class="nc" id="L50">        ilhasDropdown.setItems(ilhas);</span>
+<span class="nc" id="L51">        concelhosDropdown.setItems(concelhos);</span>
+<span class="nc" id="L52">        freguesiasDropdown.setItems(freguesias);</span>
+
+<span class="nc" id="L54">        ilhasDropdown.addClassName(&quot;dropdown-ilha&quot;);</span>
+<span class="nc" id="L55">        concelhosDropdown.addClassName(&quot;dropdown-concelho&quot;);</span>
+<span class="nc" id="L56">        freguesiasDropdown.addClassName(&quot;dropdown-freguesia&quot;);</span>
+
+        // Listeners para alterar visualização dinamicamente
+<span class="nc" id="L59">        ilhasDropdown.addValueChangeListener(e -&gt; updateIsland());</span>
+<span class="nc" id="L60">        concelhosDropdown.addValueChangeListener(e -&gt; updateConcelho());</span>
+<span class="nc" id="L61">        freguesiasDropdown.addValueChangeListener(e -&gt; updateFreguesia());</span>
+
+        // Zona de filtros
+<span class="nc" id="L64">        Div filtros = new Div(ilhasDropdown, concelhosDropdown, freguesiasDropdown);</span>
+<span class="nc" id="L65">        filtros.addClassName(&quot;filters&quot;);</span>
+
+        // Search button
+<span class="nc" id="L68">        Button verGrafo = new Button(&quot;Ver Trocas&quot;, e -&gt; verGrafo(ilhasDropdown.getValue(),</span>
+<span class="nc" id="L69">                concelhosDropdown.getValue(), freguesiasDropdown.getValue()));</span>
+<span class="nc" id="L70">        verGrafo.addClassName(&quot;botao-ver-grafo1&quot;);</span>
+
+<span class="nc" id="L72">        Anchor proprietariosLink = new Anchor(&quot;trades?criteria=Proprietarios&quot;, &quot;Mostre me os proprietários!&quot;);</span>
+<span class="nc" id="L73">        proprietariosLink.setClassName(&quot;prop-link&quot;);</span>
+
+
+        // Área de visualização JS
+<span class="nc" id="L77">        Div graphArea = new Div();</span>
+<span class="nc" id="L78">        graphArea.setId(&quot;visualizacao-grafica&quot;);</span>
+<span class="nc" id="L79">        graphArea.addClassName(&quot;landing-graph-area&quot;);</span>
+
+<span class="nc" id="L81">        Div criteria = new Div(filtros, verGrafo, proprietariosLink);</span>
+<span class="nc" id="L82">        criteria.addClassName(&quot;landing-criteria&quot;);</span>
+
+        // Wrapper geral
+<span class="nc" id="L85">        add(titulo, graphArea, criteria);</span>
+
+<span class="nc" id="L87">        getElement().executeJs(&quot;window.initGraph($0)&quot;);</span>
+<span class="nc" id="L88">    }</span>
+
+    private void updateIsland(){
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (ilhasDropdown.getValue().isEmpty()) return;</span>
+<span class="nc" id="L92">        concelhosDropdown.setValue(&quot;&quot;);</span>
+<span class="nc" id="L93">        freguesiasDropdown.setValue(&quot;&quot;);</span>
+<span class="nc" id="L94">        atualizarVisualizacao(ilhasDropdown.getValue(), null, null);</span>
+<span class="nc" id="L95">    }</span>
+
+    private void updateConcelho(){
+<span class="nc bnc" id="L98" title="All 2 branches missed.">        if (concelhosDropdown.getValue().isEmpty()) return;</span>
+<span class="nc" id="L99">        ilhasDropdown.setValue(&quot;&quot;);</span>
+<span class="nc" id="L100">        freguesiasDropdown.setValue(&quot;&quot;);</span>
+<span class="nc" id="L101">        atualizarVisualizacao(null, concelhosDropdown.getValue(), null);</span>
+
+<span class="nc" id="L103">    }</span>
+
+    private void updateFreguesia(){
+<span class="nc bnc" id="L106" title="All 2 branches missed.">        if (freguesiasDropdown.getValue().isEmpty()) return;</span>
+<span class="nc" id="L107">        ilhasDropdown.setValue(&quot;&quot;);</span>
+<span class="nc" id="L108">        concelhosDropdown.setValue(&quot;&quot;);</span>
+<span class="nc" id="L109">        atualizarVisualizacao(null,null,freguesiasDropdown.getValue());</span>
+
+<span class="nc" id="L111">    }</span>
+
+    private void atualizarVisualizacao(String ilha, String concelho, String freguesia) {
+<span class="nc" id="L114">        getElement().executeJs(&quot;window.updateGraph($0, $1, $2)&quot;, ilha, concelho, freguesia);</span>
+<span class="nc" id="L115">    }</span>
+
+    private void verGrafo(String ilha, String concelho, String freguesia) {
+
+<span class="nc bnc" id="L119" title="All 8 branches missed.">        if (ilha == null &amp; concelho == null &amp; freguesia == null){ // Load proprietários (Everything null)</span>
+<span class="nc" id="L120">            UI.getCurrent().navigate(&quot;trades?criteria=Proprietarios&quot;);</span>
+<span class="nc bnc" id="L121" title="All 4 branches missed.">        } else if (ilha != null &amp;&amp; !ilha.isEmpty()) {    // Load with ilha</span>
+<span class="nc" id="L122">            UI.getCurrent().navigate(&quot;trades?criteria=ilha&amp;ilha=&quot; + ilha);</span>
+<span class="nc bnc" id="L123" title="All 4 branches missed.">        } else if (concelho != null &amp;&amp; !concelho.isEmpty()) {   // Load with concelho</span>
+<span class="nc" id="L124">            UI.getCurrent().navigate(&quot;trades?criteria=concelho&amp;concelho=&quot; + concelho);</span>
+<span class="nc bnc" id="L125" title="All 4 branches missed.">        } else if (freguesia != null &amp;&amp; !freguesia.isEmpty()) {    // Load with freguesia</span>
+<span class="nc" id="L126">            UI.getCurrent().navigate(&quot;trades?criteria=freguesia&amp;freguesia=&quot; + freguesia);</span>
+        }
+
+<span class="nc" id="L129">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

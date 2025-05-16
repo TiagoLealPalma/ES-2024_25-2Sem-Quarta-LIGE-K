@@ -4,7 +4,7 @@ import iscte.lige.k.dataStructures.Owner;
 import iscte.lige.k.dataStructures.Property;
 import iscte.lige.k.dataStructures.SimplerProperty;
 import iscte.lige.k.dataStructures.Trade;
-import iscte.lige.k.util.SVGGenerator;
+import iscte.lige.k.SVGGenerator;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
@@ -61,6 +61,7 @@ public class PropertiesLoader {
      * Private constructor: parses CSV, builds all data structures, and marks loader as ready.
      */
     private PropertiesLoader() {
+        System.err.println("Booting PropertiesLoader...");
         parseData("src/main/resources/Madeira-Moodle-1.1.csv");
         connectNeighbours();
         generateSimplerProperties();
@@ -281,19 +282,49 @@ public class PropertiesLoader {
     }
 
     /**
-     * Exports all properties to SVG grouped by municipality and parish.
+     * Retrieves the average area by property for a set of properties,
+     * according to the current loading options.
      *
-     * @throws Exception on any export failure
+     * @return Integer value of the area; may be 0 if no properties are evaluated.
      */
-    public void buildSVG() throws Exception {
-        List<SimplerProperty> simp = getSimplerProperties();
-        SVGGenerator.exportPropertiesToSVG(simp, "null", "null");
-        for (String muni : mapMunicipioToFreguesia.keySet()) {
-            SVGGenerator.exportPropertiesToSVG(simp, muni, "null");
-            for (String freg : mapMunicipioToFreguesia.get(muni)) {
-                SVGGenerator.exportPropertiesToSVG(simp, muni, freg);
-            }
+    public int getAvgArea() {
+        List<Property> propertiesBeingLoaded = getPropertiesWithNeighbours();
+        if (propertiesBeingLoaded.isEmpty()) return 0;
+
+        double sum = 0;
+
+        for (Property p : propertiesBeingLoaded) {
+            sum += p.getArea();
         }
+        return (int)(sum / propertiesBeingLoaded.size());
+    }
+
+    /**
+     * Retrieves the average of all the owners average property area for a set of owners,
+     * according to the current loading options.
+     *
+     * @return Integer value of the area; may be 0 if no owners are evaluated.
+     */
+    public int getAvgAreaByOwner(){
+        List<Property> propertiesBeingLoaded = getPropertiesWithNeighbours();
+        if (propertiesBeingLoaded.isEmpty()) return 0;
+
+        double sum = 0;
+        int counter = 0;
+
+        Set<Owner> uniqueOwners= new HashSet<>();
+
+        for (Property p : propertiesBeingLoaded) {
+            if(uniqueOwners.contains(p.getOwner()))
+                continue;
+
+            Owner owner = p.getOwner();
+            uniqueOwners.add(owner);
+            sum += owner.calculateAvgArea();
+            counter++;
+
+        }
+        return (int)(sum / counter);
     }
 
     /**
@@ -411,7 +442,6 @@ public class PropertiesLoader {
      * Generates simplified versions of properties for quicker rendering.
      */
     private void generateSimplerProperties() {
-        System.err.println("Building simpler versions of properties...");
         for (Property p : properties) {
             if (p.getGeometry().isValid() && !p.getGeometry().isEmpty()) {
                 simplerProperties.add(new SimplerProperty(p));
@@ -447,6 +477,22 @@ public class PropertiesLoader {
         );
     }
 
+    /**
+     * Exports all properties to SVG grouped by municipality and parish.
+     *
+     * @throws Exception on any export failure
+     */
+    private void buildSVG() throws Exception {
+        List<SimplerProperty> simp = getSimplerProperties();
+        SVGGenerator.exportPropertiesToSVG(simp, "null", "null");
+        for (String muni : mapMunicipioToFreguesia.keySet()) {
+            SVGGenerator.exportPropertiesToSVG(simp, muni, "null");
+            for (String freg : mapMunicipioToFreguesia.get(muni)) {
+                SVGGenerator.exportPropertiesToSVG(simp, muni, freg);
+            }
+        }
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Main (for quick debugging / testing)
     // ---------------------------------------------------------------------------------------------
@@ -463,42 +509,5 @@ public class PropertiesLoader {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    // By property
-    public int getAvgArea() {
-        List<Property> propertiesBeingLoaded = getPropertiesWithNeighbours();
-        if (propertiesBeingLoaded.isEmpty()) return 0;
-
-        int sum = 0;
-
-        for (Property p : propertiesBeingLoaded) {
-            sum += p.getArea();
-        }
-        System.err.println((int)(sum / propertiesBeingLoaded.size()));
-        return (int)(sum / propertiesBeingLoaded.size());
-    }
-
-    public int getAvgAreaByOwner(){
-        List<Property> propertiesBeingLoaded = getPropertiesWithNeighbours();
-        if (propertiesBeingLoaded.isEmpty()) return 0;
-
-        int sum = 0;
-        int counter = 0;
-
-        Set<Owner> uniqueOwners= new HashSet<>();
-
-        for (Property p : propertiesBeingLoaded) {
-            if(uniqueOwners.contains(p.getOwner()))
-                continue;
-
-            Owner owner = p.getOwner();
-            uniqueOwners.add(owner);
-            sum += owner.calculateAvgArea();
-            counter++;
-
-        }
-        System.err.println((int)(sum / counter));
-        return (int)(sum / counter);
     }
 }

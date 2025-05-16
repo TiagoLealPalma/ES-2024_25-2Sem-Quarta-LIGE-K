@@ -20,9 +20,6 @@ const loadOnDemand = (key) => {
   if (key === 'e75e14ba80b70cad90e0b2d637aa0e6b5fffea1d824b708f34dff06e3416b7eb') {
     pending.push(import('./chunks/chunk-ed6f0b813499d07b07f8a7de6ec14026501f9f62327ad0501676935fd3e78ebd.js'));
   }
-  if (key === '4d240e37db37bf287d5e8038e16282fddab5db69048ed42415adcb3fd3d43c21') {
-    pending.push(import('./chunks/chunk-6df6d21f748f6c09a511d9b7a94c62754cf73b78e32844cf3cceefd65ca8b27c.js'));
-  }
   if (key === '4d6d1d337e4513602e64a8017419b9dbb27803da295acae2111e7a493eb74f62') {
     pending.push(import('./chunks/chunk-ad4e4b7be023fac0d7a97b8e36319522f2eebf822e3bfb955f3d6cc95ba3d92d.js'));
   }

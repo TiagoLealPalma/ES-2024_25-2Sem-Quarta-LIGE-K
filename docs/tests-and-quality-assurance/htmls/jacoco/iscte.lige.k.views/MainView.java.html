@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MainView.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Terrain-Fragmentation-Helper</a> &gt; <a href="index.source.html" class="el_package">iscte.lige.k.views</a> &gt; <span class="el_source">MainView.java</span></div><h1>MainView.java</h1><pre class="source lang-java linenums">package iscte.lige.k.views;
+
+import com.vaadin.flow.component.dependency.Uses;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.listbox.ListBox;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
+import com.vaadin.flow.router.Route;
+import iscte.lige.k.dataStructures.Trade;
+import iscte.lige.k.service.PropertiesLoader;
+import iscte.lige.k.util.TradeEval;
+
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+@Route(&quot;trades&quot;)
+@Uses(ListBox.class)
+@Uses(HorizontalLayout.class)
+public class MainView extends VerticalLayout implements AfterNavigationObserver {
+
+<span class="nc" id="L26">    private PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();</span>
+<span class="nc" id="L27">    private final Div loadingText = new Div();</span>
+<span class="nc" id="L28">    private final Div spinner = new Div();</span>
+<span class="nc" id="L29">    private final HorizontalLayout content = new HorizontalLayout();</span>
+<span class="nc" id="L30">    private final VerticalLayout vertical = new VerticalLayout();</span>
+<span class="nc" id="L31">    private final Span areaLabel = new Span();</span>
+<span class="nc" id="L32">    private final Span nOwnersLabel = new Span();</span>
+<span class="nc" id="L33">    private final Span avgOwnerLabel = new Span();</span>
+
+<span class="nc" id="L35">    public MainView() {</span>
+<span class="nc" id="L36">    }</span>
+
+    @Override
+    public void afterNavigation(AfterNavigationEvent event) {
+<span class="nc" id="L40">        String criteriaEncoded = event.getLocation()</span>
+<span class="nc" id="L41">                .getQueryParameters()</span>
+<span class="nc" id="L42">                .getParameters()</span>
+<span class="nc" id="L43">                .getOrDefault(&quot;criteria&quot;, List.of(&quot;&quot;))</span>
+<span class="nc" id="L44">                .get(0);</span>
+
+<span class="nc" id="L46">        String criteria = URLDecoder.decode(criteriaEncoded, StandardCharsets.UTF_8);</span>
+<span class="nc" id="L47">        System.err.println(&quot;Critério recebido: &quot; + criteria);</span>
+
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        if (criteria.contains(&quot;Proprietarios&quot;)){</span>
+<span class="nc" id="L50">            System.err.println(&quot;Loading graph for: Proprietários&quot;);</span>
+<span class="nc" id="L51">            propertiesLoader.setLoadingOptions(new String[]{&quot;Proprietarios&quot;, &quot;null&quot;});</span>
+<span class="nc" id="L52">            buildUI();</span>
+<span class="nc" id="L53">            return;</span>
+        }
+
+
+
+        // Se for de propriedades
+<span class="nc" id="L59">        String valueEncoded = event.getLocation()</span>
+<span class="nc" id="L60">                .getQueryParameters()</span>
+<span class="nc" id="L61">                .getParameters()</span>
+<span class="nc" id="L62">                .getOrDefault(criteria, List.of(&quot;&quot;))</span>
+<span class="nc" id="L63">                .get(0);</span>
+
+<span class="nc" id="L65">        String value = URLDecoder.decode(valueEncoded, StandardCharsets.UTF_8);</span>
+<span class="nc" id="L66">        System.err.println(&quot;Critério recebido: &quot; + value);</span>
+
+
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (!value.isBlank()) {</span>
+<span class="nc" id="L70">            System.err.println(&quot;Loading graph for: &quot; + value);</span>
+<span class="nc" id="L71">            propertiesLoader.setLoadingOptions(new String[]{criteria, value});</span>
+<span class="nc" id="L72">            areaLabel.setText(&quot;Area média por propriedades: &quot; + propertiesLoader.getAvgArea());</span>
+<span class="nc" id="L73">            nOwnersLabel.setText(&quot;Nº de propriedades: &quot; + propertiesLoader.getPropertiesWithNeighbours().size());</span>
+<span class="nc" id="L74">            avgOwnerLabel.setText(&quot;Area média por proprietários: &quot; + propertiesLoader.getAvgAreaByOwner());</span>
+
+<span class="nc" id="L76">            buildUI(value);</span>
+        } else {
+<span class="nc" id="L78">            removeAll();</span>
+<span class="nc" id="L79">            add(new H1(&quot;Freguesia não selecionada.&quot;));</span>
+        }
+<span class="nc" id="L81">    }</span>
+
+
+    private void buildUI(String freguesia) {
+<span class="nc" id="L85">        showLoadingScreen(freguesia);</span>
+<span class="nc" id="L86">        Div infoDiv = new Div();</span>
+<span class="nc" id="L87">        infoDiv.setClassName(&quot;info-div&quot;);</span>
+<span class="nc" id="L88">        infoDiv.setHeight(&quot;2rem&quot;);</span>
+<span class="nc" id="L89">        infoDiv.getStyle().set(&quot;display&quot;, &quot;flex&quot;);</span>
+<span class="nc" id="L90">        infoDiv.getStyle().set(&quot;justify-content&quot;, &quot;space-evenly&quot;);</span>
+<span class="nc" id="L91">        areaLabel.setClassName(&quot;info-span&quot;);</span>
+<span class="nc" id="L92">        nOwnersLabel.setClassName(&quot;info-span&quot;);</span>
+<span class="nc" id="L93">        avgOwnerLabel.setClassName(&quot;info-span&quot;);</span>
+<span class="nc" id="L94">        infoDiv.add(areaLabel, nOwnersLabel, avgOwnerLabel);</span>
+<span class="nc" id="L95">        vertical.setHeight(&quot;100%&quot;);</span>
+
+<span class="nc" id="L97">        vertical.add(infoDiv, content);</span>
+
+
+        // Prepare main content layout
+<span class="nc" id="L101">        content.setWidthFull();</span>
+<span class="nc" id="L102">        content.setHeight(&quot;100vh&quot;);</span>
+<span class="nc" id="L103">        content.setSpacing(true);</span>
+<span class="nc" id="L104">        vertical.getStyle().set(&quot;display&quot;, &quot;none&quot;); // initially hidden until JS loads</span>
+<span class="nc" id="L105">        content.getStyle().set(&quot;display&quot;, &quot;none&quot;); // initially hidden until JS loads</span>
+
+        // Create the graph viewer (must be in DOM early for JS to execute)
+<span class="nc" id="L108">        GraphViewerComponent graph = new GraphViewerComponent();</span>
+<span class="nc" id="L109">        graph.setWidthFull();</span>
+<span class="nc" id="L110">        graph.setHeightFull();</span>
+<span class="nc" id="L111">        content.setFlexGrow(1, graph);</span>
+<span class="nc" id="L112">        content.add(graph);</span>
+
+        // Create the side list
+
+
+<span class="nc" id="L117">        ListBox&lt;HorizontalLayout&gt; list = new ListBox&lt;&gt;();</span>
+
+        // DEBUGGING
+<span class="nc" id="L120">        List&lt;Trade&gt; trades = propertiesLoader.getTrades().stream().sorted().distinct().toList();</span>
+
+        // Trades list
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        for (Trade trade : trades) {</span>
+            // Trade item
+<span class="nc" id="L125">            HorizontalLayout row = new HorizontalLayout();</span>
+<span class="nc" id="L126">            row.addClassName(&quot;trade-item&quot;);</span>
+
+            // Attributes for P1
+<span class="nc" id="L129">            row.getElement().setAttribute(&quot;P1&quot;, trade.getOwner1Property().getParcelaId());</span>
+<span class="nc" id="L130">            row.getElement().setAttribute(&quot;P1Main&quot;, trade.getOwner1MainProperty().getParcelaId());</span>
+
+            // Attributes for P2
+<span class="nc" id="L133">            row.getElement().setAttribute(&quot;P2&quot;, trade.getOwner2Property().getParcelaId());</span>
+<span class="nc" id="L134">            row.getElement().setAttribute(&quot;P2Main&quot;, trade.getOwner2MainProperty().getParcelaId());</span>
+
+            // Trade label
+<span class="nc" id="L137">            Span label = new Span(trade.toString());</span>
+<span class="nc" id="L138">            label.addClassName(&quot;trade-label&quot;);</span>
+
+            // Trade grade
+<span class="nc" id="L141">            Span grade = new Span(String.valueOf(trade.getScore()));</span>
+<span class="nc" id="L142">            grade.addClassName(&quot;trade-grade&quot;);</span>
+<span class="nc" id="L143">            grade.getStyle().set(&quot;background-color&quot;, TradeEval.IntToColor(trade.getScore()));</span>
+
+<span class="nc" id="L145">            row.add(label, grade);</span>
+<span class="nc" id="L146">            list.add(row);</span>
+<span class="nc" id="L147">        }</span>
+
+
+<span class="nc" id="L150">        list.setWidthFull();</span>
+<span class="nc" id="L151">        list.setHeightFull();</span>
+<span class="nc" id="L152">        content.setFlexGrow(2, list);</span>
+<span class="nc" id="L153">        content.add(list);</span>
+
+
+        // Add content to the page (graph will still be hidden until ready)
+<span class="nc" id="L157">        add(vertical);</span>
+
+        // Show graph and hide loading screen when JS notifies that the graph is ready
+<span class="nc" id="L160">        graph.onGraphLoaded(() -&gt; {</span>
+<span class="nc" id="L161">            remove(loadingText, spinner);</span>
+<span class="nc" id="L162">            content.getStyle().set(&quot;display&quot;, &quot;flex&quot;);</span>
+<span class="nc" id="L163">            vertical.getStyle().set(&quot;display&quot;, &quot;block&quot;);</span>
+<span class="nc" id="L164">            loadingText.setVisible(false);</span>
+<span class="nc" id="L165">            spinner.setVisible(false);</span>
+<span class="nc" id="L166">            System.err.println(&quot;Graph was loaded, hiding loading screen&quot;);</span>
+<span class="nc" id="L167">        });</span>
+<span class="nc" id="L168">    }</span>
+
+    // Used for proprietarios
+    private void buildUI() {
+<span class="nc" id="L172">        showLoadingScreen(&quot;&quot;);</span>
+
+        // Prepare main content layout
+<span class="nc" id="L175">        content.setWidthFull();</span>
+<span class="nc" id="L176">        content.setHeight(&quot;100vh&quot;);</span>
+<span class="nc" id="L177">        content.setSpacing(true);</span>
+<span class="nc" id="L178">        content.getStyle().set(&quot;display&quot;, &quot;none&quot;); // initially hidden until JS loads</span>
+
+        // Create the graph viewer (must be in DOM early for JS to execute)
+<span class="nc" id="L181">        GraphViewerComponent graph = new GraphViewerComponent();</span>
+<span class="nc" id="L182">        graph.setWidthFull();</span>
+<span class="nc" id="L183">        graph.setHeightFull();</span>
+<span class="nc" id="L184">        content.setFlexGrow(1, graph);</span>
+<span class="nc" id="L185">        content.add(graph);</span>
+
+        // Add content to the page (graph will still be hidden until ready)
+<span class="nc" id="L188">        add(content);</span>
+
+        // Show graph and hide loading screen when JS notifies that the graph is ready
+<span class="nc" id="L191">        graph.onGraphLoaded(() -&gt; {</span>
+<span class="nc" id="L192">            remove(loadingText, spinner);</span>
+<span class="nc" id="L193">            content.getStyle().set(&quot;display&quot;, &quot;flex&quot;);</span>
+<span class="nc" id="L194">            loadingText.setVisible(false);</span>
+<span class="nc" id="L195">            spinner.setVisible(false);</span>
+<span class="nc" id="L196">            System.err.println(&quot;Graph was loaded, hiding loading screen&quot;);</span>
+<span class="nc" id="L197">        });</span>
+<span class="nc" id="L198">    }</span>
+
+
+    // Notificar do comprimento do que estiver ser loaded
+    private void showLoadingScreen(String freguesia) {
+
+<span class="nc" id="L204">        setSizeFull();</span>
+<span class="nc" id="L205">        getStyle().set(&quot;background&quot;, &quot;#0f1117&quot;);</span>
+<span class="nc" id="L206">        setAlignItems(Alignment.CENTER);</span>
+<span class="nc" id="L207">        setJustifyContentMode(JustifyContentMode.CENTER);</span>
+
+<span class="nc bnc" id="L209" title="All 2 branches missed.">        if(freguesia.contains(&quot;Todas&quot;))</span>
+<span class="nc" id="L210">        loadingText.setText(&quot;Loading graph...&quot; +</span>
+                &quot;\n Your are loading 18 thousand entities, please be patient :)&quot;);
+        else
+<span class="nc" id="L213">            loadingText.setText(&quot;Loading graph...&quot;);</span>
+<span class="nc" id="L214">        loadingText.getStyle()</span>
+<span class="nc" id="L215">                .set(&quot;color&quot;, &quot;white&quot;)</span>
+<span class="nc" id="L216">                .set(&quot;fontSize&quot;, &quot;1.5rem&quot;)</span>
+<span class="nc" id="L217">                .set(&quot;marginTop&quot;, &quot;2rem&quot;);</span>
+
+<span class="nc" id="L219">        spinner.setClassName(&quot;spinner&quot;);</span>
+<span class="nc" id="L220">        add(spinner, loadingText);</span>
+<span class="nc" id="L221">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

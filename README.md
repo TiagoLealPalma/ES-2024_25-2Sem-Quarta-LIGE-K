@@ -69,26 +69,26 @@ Terrain-Fragmentation-Helper
 │   └── main/
 │       ├── java/
 │       │   └── iscte/lige/k/
-│       │       ├── **dataStructures/   # Estruturas principais: Property, Owner, Trade, etc.**
-│       │       ├── **service/          # Serviços de carregamento e lógica de negócio**
-│       │       ├── **util/             # Utilitários como avaliação de trocas e geração de svgs para frontend**
+│       │       ├── dataStructures/   # Estruturas principais: Property, Owner, Trade, etc
+│       │       ├── service/          # Serviços de carregamento e lógica de negócio
+│       │       ├── util/             # Utilitários como avaliação de trocas e geração de svgs para frontend
 │       │       └── views/            # Geração de SVG e visualizações
 |       |
-│       └── resources/         # Ficheiros de configuração e recursos **
+│       └── resources/         # Ficheiros de configuração e recursos 
 │
 ├── test/
 │   └── java/
-│       └── **iscte/lige/k/      # Testes JUnit organizados por pacote**
+│       └── iscte/lige/k/      # Testes JUnit organizados por pacote
 │
 ├── pom.xml                    # Gestão de dependências e build com Maven
 ├── application.properties     # Configurações Spring Boot
 ├── README.md                  # Documento de apresentação do projeto
 ├── target/                    # Código compilado e ficheiros gerados
 |
-└── **docs/          # Quality assurance and documentation related material for delieverable**  
-      ├── **documentation/**
-      ├── **tests-and-quality-assurance/**
-      └── **trello/**
+└── docs/          # Pasta que guarda documentos de controlo de qualidade, documentação do código e gestão do projeto
+      ├── documentation/ # JavaDoc HTMLs
+      ├── tests-and-quality-assurance/ # Jacoco reports and IDE Coverage
+      └── trello/ # Prints da gestão no Trello
 ```          
 
 ---
@@ -115,7 +115,7 @@ A documentação técnica do projeto foi gerada automaticamente com JavaDoc e en
 
 ## 📅 Gestão Ágil com Scrum
 
-- Ferramenta de gestão: **GitHub Projects / Trello**
+- Ferramenta de gestão: **Trello**
 - Planeamento por Sprints com definição de tarefas
 - Documentação de:
   - Product Backlog

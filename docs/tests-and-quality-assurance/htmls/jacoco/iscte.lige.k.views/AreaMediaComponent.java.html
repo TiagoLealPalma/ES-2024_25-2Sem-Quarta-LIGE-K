@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AreaMediaComponent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Terrain-Fragmentation-Helper</a> &gt; <a href="index.source.html" class="el_package">iscte.lige.k.views</a> &gt; <span class="el_source">AreaMediaComponent.java</span></div><h1>AreaMediaComponent.java</h1><pre class="source lang-java linenums">package iscte.lige.k.views;
+
+import com.vaadin.flow.component.ClientCallable;
+import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.dependency.JsModule;
+import com.vaadin.flow.component.html.Div;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
+import java.text.Normalizer;
+
+
+@Tag(&quot;area-media-viewer&quot;)
+@JsModule(&quot;./area-media-viewer.js&quot;)
+public class AreaMediaComponent extends Div {
+
+<span class="nc" id="L20">    public AreaMediaComponent() {</span>
+<span class="nc" id="L21">        System.err.println(&quot;AreaMediaComponent inicializado.&quot;);</span>
+<span class="nc" id="L22">    }</span>
+
+    @ClientCallable
+    public void requestAverageArea(String criterio, String localidade) {
+<span class="nc" id="L26">        String filePath = &quot;src/main/resources/Madeira-Moodle-1.1.csv&quot;;</span>
+<span class="nc" id="L27">        double media = calcularAreaMedia(filePath, criterio, localidade.toLowerCase());</span>
+
+        // Envia o resultado para o frontend
+<span class="nc" id="L30">        getElement().callJsFunction(&quot;showResult&quot;, media);</span>
+<span class="nc" id="L31">    }</span>
+
+    private double calcularAreaMedia(String filePath, String agrupamentoEscolhido, String localidadeEscolhida) {
+<span class="nc" id="L34">        File csv = new File(filePath);</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (!csv.exists()) {</span>
+<span class="nc" id="L36">            System.err.println(&quot;Ficheiro CSV não encontrado: &quot; + filePath);</span>
+<span class="nc" id="L37">            return 0;</span>
+        }
+
+<span class="nc" id="L40">        Map&lt;String, List&lt;Double&gt;&gt; areasMap = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L42">        try (BufferedReader reader = new BufferedReader(new FileReader(csv))) {</span>
+            String linha;
+<span class="nc" id="L44">            boolean isHeader = true;</span>
+<span class="nc" id="L45">            StringBuilder recordBuilder = new StringBuilder();</span>
+
+<span class="nc bnc" id="L47" title="All 2 branches missed.">            while ((linha = reader.readLine()) != null) {</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">                if (isHeader) {</span>
+<span class="nc" id="L49">                    isHeader = false;</span>
+<span class="nc" id="L50">                    continue; // Ignora cabeçalho</span>
+                }
+
+<span class="nc bnc" id="L53" title="All 2 branches missed.">                if (recordBuilder.length() &gt; 0) {</span>
+<span class="nc" id="L54">                    recordBuilder.append(&quot;\n&quot;);</span>
+                }
+<span class="nc" id="L56">                recordBuilder.append(linha);</span>
+
+<span class="nc" id="L58">                String[] dataCheck = recordBuilder.toString().split(&quot;;&quot;, -1);</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">                if (dataCheck.length &lt; 10) {</span>
+<span class="nc" id="L60">                    continue; // Linha ainda incompleta</span>
+                }
+
+<span class="nc" id="L63">                String[] data = dataCheck;</span>
+
+<span class="nc bnc" id="L65" title="All 4 branches missed.">                String localidade = switch (agrupamentoEscolhido) {</span>
+<span class="nc" id="L66">                    case &quot;Freguesia&quot; -&gt; data[7];</span>
+<span class="nc" id="L67">                    case &quot;Município&quot; -&gt; data[8];</span>
+<span class="nc" id="L68">                    case &quot;Ilha&quot;      -&gt; data[9];</span>
+<span class="nc" id="L69">                    default          -&gt; &quot;&quot;;</span>
+                };
+
+
+<span class="nc bnc" id="L73" title="All 2 branches missed.">                if (normalizar(localidade).equals(normalizar(localidadeEscolhida))) {</span>
+                    try {
+<span class="nc" id="L75">                        double area = Double.parseDouble(data[4]);</span>
+<span class="nc" id="L76">                        areasMap.computeIfAbsent(localidadeEscolhida, k -&gt; new ArrayList&lt;&gt;()).add(area);</span>
+<span class="nc" id="L77">                    } catch (NumberFormatException e) {</span>
+<span class="nc" id="L78">                        System.err.println(&quot;Área inválida: &quot; + data[4]);</span>
+<span class="nc" id="L79">                    }</span>
+                }
+
+<span class="nc" id="L82">                recordBuilder.setLength(0); // Limpa para próximo registo</span>
+<span class="nc" id="L83">            }</span>
+
+<span class="nc" id="L85">            List&lt;Double&gt; areas = areasMap.getOrDefault(localidadeEscolhida, Collections.emptyList());</span>
+<span class="nc" id="L86">            return areas.stream().mapToDouble(Double::doubleValue).average().orElse(0);</span>
+
+<span class="nc" id="L88">        } catch (IOException e) {</span>
+<span class="nc" id="L89">            System.err.println(&quot;Erro ao ler o CSV: &quot; + e.getMessage());</span>
+<span class="nc" id="L90">            return 0;</span>
+        }
+    }
+
+    private String normalizar(String texto) {
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (texto == null) return &quot;&quot;;</span>
+
+        // Remove acentos
+<span class="nc" id="L98">        String normalizado = Normalizer.normalize(texto, Normalizer.Form.NFD)</span>
+<span class="nc" id="L99">                .replaceAll(&quot;\\p{InCombiningDiacriticalMarks}+&quot;, &quot;&quot;);</span>
+
+        // Remove espaços extras e torna tudo minúsculas
+<span class="nc" id="L102">        return normalizado</span>
+<span class="nc" id="L103">                .toLowerCase()</span>
+<span class="nc" id="L104">                .replaceAll(&quot;\\s+&quot;, &quot;&quot;); // remove todos os espaços</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

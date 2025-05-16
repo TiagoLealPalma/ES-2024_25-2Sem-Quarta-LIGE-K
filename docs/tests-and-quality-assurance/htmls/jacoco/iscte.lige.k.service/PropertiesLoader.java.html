@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PropertiesLoader.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Terrain-Fragmentation-Helper</a> &gt; <a href="index.source.html" class="el_package">iscte.lige.k.service</a> &gt; <span class="el_source">PropertiesLoader.java</span></div><h1>PropertiesLoader.java</h1><pre class="source lang-java linenums">package iscte.lige.k.service;
+
+import iscte.lige.k.dataStructures.Owner;
+import iscte.lige.k.dataStructures.Property;
+import iscte.lige.k.dataStructures.SimplerProperty;
+import iscte.lige.k.dataStructures.Trade;
+import iscte.lige.k.SVGGenerator;
+
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
+import org.locationtech.jts.index.strtree.STRtree;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.*;
+
+/**
+ * Singleton class responsible for loading, parsing and managing all property-related data.
+ * Parses input CSV, builds neighbour relations, creates simplified property versions,
+ * generates trades, and provides filtered access based on administrative divisions.
+ */
+public class PropertiesLoader {
+
+    // ---------------------------------------------------------------------------------------------
+    // Singleton control
+    // ---------------------------------------------------------------------------------------------
+<span class="fc" id="L28">    private static PropertiesLoader instance = null;</span>
+<span class="fc" id="L29">    private static boolean loaded = false;</span>
+
+    // ---------------------------------------------------------------------------------------------
+    // Core data structures
+    // ---------------------------------------------------------------------------------------------
+<span class="fc" id="L34">    private Map&lt;Integer, Owner&gt; owners                                      = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L35">    private HashMap&lt;Owner, Map&lt;Owner, Integer&gt;&gt; ownersNeighbouringRelations = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L36">    private List&lt;Property&gt; properties                                       = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L37">    private List&lt;SimplerProperty&gt; simplerProperties                         = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L38">    private List&lt;Trade&gt; trades                                              = new ArrayList&lt;&gt;();</span>
+
+    // ---------------------------------------------------------------------------------------------
+    // Administrative groupings
+    // ---------------------------------------------------------------------------------------------
+<span class="fc" id="L43">    private List&lt;String&gt; parishes                                           = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L44">    private List&lt;String&gt; counties                                           = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L45">    private List&lt;String&gt; islands                                            = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L46">    private Map&lt;String, List&lt;Property&gt;&gt; propertiesByParish                  = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L47">    private Map&lt;String, List&lt;Property&gt;&gt; propertiesByCounty                  = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L48">    private Map&lt;String, List&lt;Property&gt;&gt; propertiesByIsland                  = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L49">    private Map&lt;String, List&lt;String&gt;&gt; mapMunicipioToFreguesia               = new HashMap&lt;&gt;();</span>
+
+    // ---------------------------------------------------------------------------------------------
+    // Current filtering options
+    // ---------------------------------------------------------------------------------------------
+<span class="fc" id="L54">    private String[] loadingOptions = {&quot;null&quot;, &quot;null&quot;};  // [criteria, value], e.g. [&quot;freguesia&quot;, &quot;Fajã de Ovelha&quot;]</span>
+
+    // ---------------------------------------------------------------------------------------------
+    // Constructor
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Private constructor: parses CSV, builds all data structures, and marks loader as ready.
+     */
+<span class="fc" id="L63">    private PropertiesLoader() {</span>
+<span class="fc" id="L64">        parseData(&quot;src/main/resources/Madeira-Moodle-1.1.csv&quot;);</span>
+<span class="fc" id="L65">        connectNeighbours();</span>
+<span class="fc" id="L66">        generateSimplerProperties();</span>
+<span class="fc" id="L67">        buildOwnersNeighbouringRelations();</span>
+<span class="fc" id="L68">        calculateTrades();</span>
+
+<span class="fc" id="L70">        synchronized (this) {</span>
+<span class="fc" id="L71">            loaded = true;</span>
+<span class="fc" id="L72">            this.notifyAll();</span>
+<span class="fc" id="L73">            System.err.println(&quot;PropertiesLoader instance fully loaded.&quot;);</span>
+<span class="fc" id="L74">        }</span>
+<span class="fc" id="L75">    }</span>
+
+    // ---------------------------------------------------------------------------------------------
+    // Singleton Access
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Returns the singleton instance of PropertiesLoader, initializing it on first access.
+     *
+     * @return the shared PropertiesLoader instance
+     */
+    public static synchronized PropertiesLoader getInstance() {
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (instance == null) {</span>
+<span class="fc" id="L88">            instance = new PropertiesLoader();</span>
+        }
+<span class="fc" id="L90">        return instance;</span>
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Public API – Configuration &amp; Retrieval
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Sets filtering criteria for subsequent data retrievals.
+     *
+     * @param options two-element array: [criteria, value]
+     * @throws IllegalArgumentException if the criteria is not one of &quot;proprietarios&quot;, &quot;freguesia&quot;, &quot;concelho&quot;, &quot;ilha&quot;
+     */
+    public void setLoadingOptions(String[] options) {
+<span class="fc" id="L104">        checkLocked();</span>
+<span class="fc" id="L105">        String crit = options[0].toLowerCase();</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        if (!Arrays.asList(&quot;proprietarios&quot;, &quot;freguesia&quot;, &quot;concelho&quot;, &quot;ilha&quot;).contains(crit)) {</span>
+<span class="nc" id="L107">            throw new IllegalArgumentException(&quot;Invalid filtering criteria: &quot; + options[0]);</span>
+        }
+
+<span class="fc" id="L110">        List&lt;String&gt; valuesList = null;</span>
+<span class="pc bpc" id="L111" title="3 of 4 branches missed.">        switch (options[1]){</span>
+            case &quot;freguesia&quot;:
+<span class="nc" id="L113">                valuesList = getParishes();</span>
+<span class="nc" id="L114">                break;</span>
+            case &quot;concelho&quot;:
+<span class="nc" id="L116">                valuesList = getCounties();</span>
+<span class="nc" id="L117">                break;</span>
+            case &quot;ilha&quot;:
+<span class="nc" id="L119">                valuesList = getIslands();</span>
+<span class="nc" id="L120">                break;</span>
+            default:
+        }
+
+        // If null -&gt; owners else valid criteria, check if contains the value
+<span class="pc bpc" id="L125" title="3 of 4 branches missed.">        if (valuesList != null &amp;&amp; !valuesList.contains(options[1])) {</span>
+<span class="nc" id="L126">            System.err.println(&quot;Invalid value for the given criteria: &quot; + options[0] + &quot; : &quot; + options[1]);</span>
+<span class="nc" id="L127">            return;</span>
+        }
+<span class="fc" id="L129">        this.loadingOptions = options;</span>
+<span class="fc" id="L130">    }</span>
+
+    /**
+     * Returns the current filtering criteria and value.
+     *
+     * @return two-element array: [criteria, value]
+     */
+    public String[] getLoadingOptions() {
+<span class="fc" id="L138">        return loadingOptions.clone();</span>
+    }
+
+    /**
+     * Retrieves all owners mapped by their ID.
+     *
+     * @return Map of owner ID to Owner
+     */
+    public Map&lt;Integer, Owner&gt; getOwners() {
+<span class="fc" id="L147">        checkLocked();</span>
+<span class="fc" id="L148">        return Collections.unmodifiableMap(owners);</span>
+    }
+
+    /**
+     * Retrieves the neighbour‐relationship counts between owners.
+     *
+     * @return Map of Owner to map of neighbouring Owner counts
+     */
+    public Map&lt;Owner, Map&lt;Owner, Integer&gt;&gt; getOwnerRelationships() {
+<span class="fc" id="L157">        checkLocked();</span>
+<span class="fc" id="L158">        return Collections.unmodifiableMap(ownersNeighbouringRelations);</span>
+    }
+
+    /**
+     * Retrieves all available islands.
+     *
+     * @return sorted List of island names
+     */
+    public List&lt;String&gt; getIslands() {
+<span class="fc" id="L167">        checkLocked();</span>
+<span class="fc" id="L168">        return propertiesByIsland.keySet().stream().sorted().toList();</span>
+    }
+
+    /**
+     * Retrieves all available counties.
+     *
+     * @return sorted List of county names
+     */
+    public List&lt;String&gt; getCounties() {
+<span class="fc" id="L177">        checkLocked();</span>
+<span class="fc" id="L178">        return propertiesByCounty.keySet().stream().sorted().toList();</span>
+    }
+
+    /**
+     * Retrieves all available parishes.
+     *
+     * @return sorted List of parish names
+     */
+    public List&lt;String&gt; getParishes() {
+<span class="fc" id="L187">        checkLocked();</span>
+<span class="fc" id="L188">        return propertiesByParish.keySet().stream().sorted().toList();</span>
+    }
+
+    /**
+     * Retrieves the mapping of parish to its list of properties.
+     *
+     * @return Map of parish name to List of Property
+     */
+    public Map&lt;String, List&lt;Property&gt;&gt; getPropertiesByParish() {
+<span class="fc" id="L197">        checkLocked();</span>
+<span class="fc" id="L198">        return Collections.unmodifiableMap(propertiesByParish);</span>
+    }
+
+    /**
+     * Retrieves the mapping of county to its list of properties.
+     *
+     * @return Map of county name to List of Property
+     */
+    public Map&lt;String, List&lt;Property&gt;&gt; getPropertiesByCounty() {
+<span class="nc" id="L207">        checkLocked();</span>
+<span class="nc" id="L208">        return Collections.unmodifiableMap(propertiesByCounty);</span>
+    }
+
+    /**
+     * Retrieves the mapping of island to its list of properties.
+     *
+     * @return Map of island name to List of Property
+     */
+    public Map&lt;String, List&lt;Property&gt;&gt; getPropertiesByIsland() {
+<span class="nc" id="L217">        checkLocked();</span>
+<span class="nc" id="L218">        return Collections.unmodifiableMap(propertiesByIsland);</span>
+    }
+
+    /**
+     * Retrieves a filtered list of properties that have at least one neighbour,
+     * according to the current loadingOptions.
+     *
+     * @return List of Property with neighbours; or null if none found
+     */
+    public List&lt;Property&gt; getPropertiesWithNeighbours() {
+<span class="fc" id="L228">        checkLocked();</span>
+<span class="fc" id="L229">        String criteria = loadingOptions[0];</span>
+<span class="fc" id="L230">        String value    = loadingOptions[1];</span>
+        List&lt;Property&gt; list;
+
+<span class="pc bpc" id="L233" title="1 of 4 branches missed.">        switch (criteria) {</span>
+<span class="fc" id="L234">            case &quot;ilha&quot;     -&gt; list = propertiesByIsland.get(value);</span>
+<span class="fc" id="L235">            case &quot;concelho&quot; -&gt; list = propertiesByCounty.get(value);</span>
+<span class="fc" id="L236">            case &quot;freguesia&quot;-&gt; list = propertiesByParish.get(value);</span>
+<span class="nc" id="L237">            default         -&gt; throw new RuntimeException(&quot;Unknown criteria: &quot; + criteria);</span>
+        }
+
+<span class="fc bfc" id="L240" title="All 2 branches covered.">        if (list == null) {</span>
+<span class="fc" id="L241">            System.err.println(&quot;No properties for &quot; + criteria + &quot;: &quot; + value);</span>
+<span class="fc" id="L242">            return null;</span>
+        }
+
+<span class="fc" id="L245">        return list.stream()</span>
+<span class="fc bfc" id="L246" title="All 2 branches covered.">                .filter(p -&gt; !p.getNeighbourProperties().isEmpty())</span>
+<span class="fc" id="L247">                .toList();</span>
+    }
+
+    /**
+     * Retrieves a filtered list of trades between owners,
+     * according to the current loadingOptions.
+     *
+     * @return List of Trade; may be empty
+     */
+    public List&lt;Trade&gt; getTrades() {
+<span class="fc" id="L257">        checkLocked();</span>
+<span class="fc" id="L258">        String criteria = loadingOptions[0];</span>
+<span class="fc" id="L259">        String value    = loadingOptions[1];</span>
+
+<span class="pc bpc" id="L261" title="1 of 4 branches missed.">        List&lt;Trade&gt; filtered = switch (criteria) {</span>
+<span class="fc" id="L262">            case &quot;ilha&quot;     -&gt; trades.stream()</span>
+<span class="pc bpc" id="L263" title="1 of 2 branches missed.">                    .filter(t -&gt; t.getOwner1Property().getIsland().equals(value)</span>
+<span class="pc bnc" id="L264" title="All 2 branches missed.">                            &amp;&amp; t.getOwner2Property().getIsland().equals(value))</span>
+<span class="fc" id="L265">                    .toList();</span>
+<span class="fc" id="L266">            case &quot;concelho&quot; -&gt; trades.stream()</span>
+<span class="pc bpc" id="L267" title="1 of 2 branches missed.">                    .filter(t -&gt; t.getOwner1Property().getCounty().equals(value)</span>
+<span class="pc bnc" id="L268" title="All 2 branches missed.">                            &amp;&amp; t.getOwner2Property().getCounty().equals(value))</span>
+<span class="fc" id="L269">                    .toList();</span>
+<span class="fc" id="L270">            case &quot;freguesia&quot;-&gt; trades.stream()</span>
+<span class="fc bfc" id="L271" title="All 2 branches covered.">                    .filter(t -&gt; t.getOwner1Property().getParish().equals(value)</span>
+<span class="fc bfc" id="L272" title="All 2 branches covered.">                            &amp;&amp; t.getOwner2Property().getParish().equals(value))</span>
+<span class="fc" id="L273">                    .toList();</span>
+<span class="nc" id="L274">            default         -&gt; Collections.emptyList();</span>
+        };
+
+<span class="fc bfc" id="L277" title="All 2 branches covered.">        if (filtered.isEmpty()) {</span>
+<span class="fc" id="L278">            System.err.println(&quot;No trades for &quot; + criteria + &quot;: &quot; + value);</span>
+        }
+<span class="fc" id="L280">        return filtered;</span>
+    }
+
+    /**
+     * Retrieves the average area by property for a set of properties,
+     * according to the current loading options.
+     *
+     * @return Integer value of the area; may be 0 if no properties are evaluated.
+     */
+    public int getAvgArea() {
+<span class="fc" id="L290">        List&lt;Property&gt; propertiesBeingLoaded = getPropertiesWithNeighbours();</span>
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">        if (propertiesBeingLoaded.isEmpty()) return 0;</span>
+
+<span class="fc" id="L293">        double sum = 0;</span>
+
+<span class="fc bfc" id="L295" title="All 2 branches covered.">        for (Property p : propertiesBeingLoaded) {</span>
+<span class="fc" id="L296">            sum += p.getArea();</span>
+<span class="fc" id="L297">        }</span>
+<span class="fc" id="L298">        return (int)(sum / propertiesBeingLoaded.size());</span>
+    }
+
+    /**
+     * Retrieves the average of all the owners average property area for a set of owners,
+     * according to the current loading options.
+     *
+     * @return Integer value of the area; may be 0 if no owners are evaluated.
+     */
+    public int getAvgAreaByOwner(){
+<span class="fc" id="L308">        List&lt;Property&gt; propertiesBeingLoaded = getPropertiesWithNeighbours();</span>
+<span class="pc bpc" id="L309" title="1 of 2 branches missed.">        if (propertiesBeingLoaded.isEmpty()) return 0;</span>
+
+<span class="fc" id="L311">        double sum = 0;</span>
+<span class="fc" id="L312">        int counter = 0;</span>
+
+<span class="fc" id="L314">        Set&lt;Owner&gt; uniqueOwners= new HashSet&lt;&gt;();</span>
+
+<span class="fc bfc" id="L316" title="All 2 branches covered.">        for (Property p : propertiesBeingLoaded) {</span>
+<span class="fc bfc" id="L317" title="All 2 branches covered.">            if(uniqueOwners.contains(p.getOwner()))</span>
+<span class="fc" id="L318">                continue;</span>
+
+<span class="fc" id="L320">            Owner owner = p.getOwner();</span>
+<span class="fc" id="L321">            uniqueOwners.add(owner);</span>
+<span class="fc" id="L322">            sum += owner.calculateAvgArea();</span>
+<span class="fc" id="L323">            counter++;</span>
+
+<span class="fc" id="L325">        }</span>
+<span class="fc" id="L326">        return (int)(sum / counter);</span>
+    }
+
+    /**
+     * Returns the simplified property list for optimized processing.
+     *
+     * @return List of SimplerProperty
+     */
+    public List&lt;SimplerProperty&gt; getSimplerProperties() {
+<span class="fc" id="L335">        checkLocked();</span>
+<span class="fc" id="L336">        return simplerProperties.stream()</span>
+<span class="fc" id="L337">                .filter(sp -&gt; {</span>
+<span class="fc" id="L338">                    double entry = Double.parseDouble(</span>
+<span class="fc" id="L339">                            sp.getEntryNumber().substring(0, 5).replace(&quot;,&quot;, &quot;.&quot;)</span>
+                    );
+<span class="fc bfc" id="L341" title="All 2 branches covered.">                    return entry &lt;= 3.5;  // filter out Porto Santo by coords</span>
+                })
+<span class="fc" id="L343">                .toList();</span>
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Private helpers – data loading and structure building
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Blocks until the instance is fully loaded.
+     */
+    private void checkLocked() {
+<span class="fc" id="L354">        synchronized (this) {</span>
+<span class="pc bpc" id="L355" title="1 of 2 branches missed.">            while (!loaded) {</span>
+                try {
+<span class="nc" id="L357">                    this.wait();</span>
+<span class="nc" id="L358">                } catch (InterruptedException e) {</span>
+<span class="nc" id="L359">                    throw new RuntimeException(e);</span>
+<span class="nc" id="L360">                }</span>
+            }
+<span class="fc" id="L362">        }</span>
+<span class="fc" id="L363">    }</span>
+
+    /**
+     * Parses the CSV file into owners, properties, and admin groupings.
+     */
+    private void parseData(String path) {
+<span class="fc" id="L369">        File csv = new File(path);</span>
+<span class="pc bpc" id="L370" title="1 of 2 branches missed.">        if (!csv.exists()) {</span>
+<span class="nc" id="L371">            System.err.println(&quot;CSV file not found or path incorrect.&quot;);</span>
+<span class="nc" id="L372">            return;</span>
+        }
+
+<span class="fc" id="L375">        try (Scanner scanner = new Scanner(csv)) {</span>
+<span class="fc" id="L376">            WKTReader reader = new WKTReader();</span>
+<span class="fc" id="L377">            scanner.nextLine(); // skip header</span>
+
+<span class="fc bfc" id="L379" title="All 2 branches covered.">            while (scanner.hasNextLine()) {</span>
+<span class="fc" id="L380">                String[] data = scanner.nextLine().split(&quot;;&quot;);</span>
+<span class="fc" id="L381">                Owner owner    = owners.computeIfAbsent(</span>
+<span class="fc" id="L382">                        Integer.parseInt(data[6]),</span>
+<span class="fc" id="L383">                        id -&gt; new Owner(data[6])</span>
+                );
+<span class="fc" id="L385">                Geometry geom  = reader.read(data[5]);</span>
+<span class="fc" id="L386">                double area    = Double.parseDouble(data[3]);</span>
+<span class="fc" id="L387">                double price   = Double.parseDouble(data[4]);</span>
+
+<span class="fc" id="L389">                Property prop = new Property(</span>
+                        data[1], data[2], area, price, geom,
+                        owner, data[7], data[8], data[9]
+                );
+<span class="fc" id="L393">                properties.add(prop);</span>
+
+                // collect administrative names
+<span class="fc bfc" id="L396" title="All 2 branches covered.">                if (!parishes.contains(data[7]))  parishes.add(data[7]);</span>
+<span class="fc bfc" id="L397" title="All 2 branches covered.">                if (!counties.contains(data[8]))  counties.add(data[8]);</span>
+<span class="fc bfc" id="L398" title="All 2 branches covered.">                if (!islands.contains(data[9]))   islands.add(data[9]);</span>
+
+<span class="fc" id="L400">                mapMunicipioToFreguesia</span>
+<span class="fc" id="L401">                        .computeIfAbsent(data[8], k -&gt; new ArrayList&lt;&gt;())</span>
+<span class="fc" id="L402">                        .add(data[7]);</span>
+<span class="fc" id="L403">                propertiesByParish</span>
+<span class="fc" id="L404">                        .computeIfAbsent(data[7], k -&gt; new ArrayList&lt;&gt;())</span>
+<span class="fc" id="L405">                        .add(prop);</span>
+<span class="fc" id="L406">                propertiesByCounty</span>
+<span class="fc" id="L407">                        .computeIfAbsent(data[8], k -&gt; new ArrayList&lt;&gt;())</span>
+<span class="fc" id="L408">                        .add(prop);</span>
+<span class="fc" id="L409">                propertiesByIsland</span>
+<span class="fc" id="L410">                        .computeIfAbsent(data[9], k -&gt; new ArrayList&lt;&gt;())</span>
+<span class="fc" id="L411">                        .add(prop);</span>
+<span class="fc" id="L412">            }</span>
+<span class="nc" id="L413">        } catch (NumberFormatException | ParseException | FileNotFoundException e) {</span>
+<span class="nc" id="L414">            throw new IllegalStateException(&quot;Failed initializing PropertiesLoader: &quot; + e, e);</span>
+<span class="fc" id="L415">        }</span>
+<span class="fc" id="L416">    }</span>
+
+    /**
+     * Builds neighbour relationships by spatial indexing and geometry checks.
+     */
+    private void connectNeighbours() {
+<span class="fc" id="L422">        STRtree index = new STRtree();</span>
+<span class="fc bfc" id="L423" title="All 2 branches covered.">        for (Property p : properties) {</span>
+<span class="fc" id="L424">            index.insert(p.getGeometry().getEnvelopeInternal(), p);</span>
+<span class="fc" id="L425">        }</span>
+<span class="fc bfc" id="L426" title="All 2 branches covered.">        for (Property p1 : properties) {</span>
+<span class="fc" id="L427">            Geometry g1 = p1.getGeometry().buffer(0);</span>
+<span class="fc" id="L428">            List&lt;Property&gt; candidates = index.query(p1.getGeometry().getEnvelopeInternal());</span>
+<span class="fc bfc" id="L429" title="All 2 branches covered.">            for (Property p2 : candidates) {</span>
+<span class="fc bfc" id="L430" title="All 2 branches covered.">                if (p1 == p2) continue;</span>
+<span class="fc" id="L431">                Geometry g2 = p2.getGeometry().buffer(0);</span>
+<span class="pc bpc" id="L432" title="1 of 4 branches missed.">                if (g1.intersects(g2) || g1.touches(g2)) {</span>
+<span class="fc" id="L433">                    p1.addNeighbour(p2);</span>
+<span class="fc" id="L434">                    p2.addNeighbour(p1);</span>
+                }
+<span class="fc" id="L436">            }</span>
+<span class="fc" id="L437">        }</span>
+<span class="fc" id="L438">    }</span>
+
+    /**
+     * Generates simplified versions of properties for quicker rendering.
+     */
+    private void generateSimplerProperties() {
+<span class="fc" id="L444">        System.err.println(&quot;Building simpler versions of properties...&quot;);</span>
+<span class="fc bfc" id="L445" title="All 2 branches covered.">        for (Property p : properties) {</span>
+<span class="pc bpc" id="L446" title="1 of 4 branches missed.">            if (p.getGeometry().isValid() &amp;&amp; !p.getGeometry().isEmpty()) {</span>
+<span class="fc" id="L447">                simplerProperties.add(new SimplerProperty(p));</span>
+            }
+<span class="fc" id="L449">        }</span>
+<span class="fc" id="L450">    }</span>
+
+    /**
+     * Builds map of owner‐neighbour relationships (owner adjacency counts).
+     */
+    private void buildOwnersNeighbouringRelations() {
+<span class="fc" id="L456">        HashMap&lt;Owner, Map&lt;Owner, Integer&gt;&gt; rels = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L457" title="All 2 branches covered.">        for (Owner o : owners.values()) {</span>
+<span class="fc" id="L458">            Map&lt;Owner, Integer&gt; map = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L459" title="All 2 branches covered.">            for (Property p : o.getProperties()) {</span>
+<span class="fc bfc" id="L460" title="All 2 branches covered.">                for (Property n : p.getNeighbourProperties()) {</span>
+<span class="fc bfc" id="L461" title="All 2 branches covered.">                    if (!n.getOwner().equals(o)) {</span>
+<span class="fc" id="L462">                        map.merge(n.getOwner(), 1, Integer::sum);</span>
+                    }
+<span class="fc" id="L464">                }</span>
+<span class="fc" id="L465">            }</span>
+<span class="fc" id="L466">            rels.put(o, map);</span>
+<span class="fc" id="L467">        }</span>
+<span class="fc" id="L468">        this.ownersNeighbouringRelations = rels;</span>
+<span class="fc" id="L469">    }</span>
+
+    /**
+     * Calculates potential trades based on owner property matches.
+     */
+    private void calculateTrades() {
+<span class="fc" id="L475">        this.trades = TradeService.getTradesList(</span>
+<span class="fc" id="L476">                new ArrayList&lt;&gt;(owners.values())</span>
+        );
+<span class="fc" id="L478">    }</span>
+
+    /**
+     * Exports all properties to SVG grouped by municipality and parish.
+     *
+     * @throws Exception on any export failure
+     */
+    private void buildSVG() throws Exception {
+<span class="nc" id="L486">        List&lt;SimplerProperty&gt; simp = getSimplerProperties();</span>
+<span class="nc" id="L487">        SVGGenerator.exportPropertiesToSVG(simp, &quot;null&quot;, &quot;null&quot;);</span>
+<span class="nc bnc" id="L488" title="All 2 branches missed.">        for (String muni : mapMunicipioToFreguesia.keySet()) {</span>
+<span class="nc" id="L489">            SVGGenerator.exportPropertiesToSVG(simp, muni, &quot;null&quot;);</span>
+<span class="nc bnc" id="L490" title="All 2 branches missed.">            for (String freg : mapMunicipioToFreguesia.get(muni)) {</span>
+<span class="nc" id="L491">                SVGGenerator.exportPropertiesToSVG(simp, muni, freg);</span>
+<span class="nc" id="L492">            }</span>
+<span class="nc" id="L493">        }</span>
+<span class="nc" id="L494">    }</span>
+
+    // ---------------------------------------------------------------------------------------------
+    // Main (for quick debugging / testing)
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Entry point to trigger SVG exports (debug / ad‐hoc usage).
+     *
+     * @param args ignored
+     */
+    public static void main(String[] args) {
+<span class="nc" id="L506">        PropertiesLoader loader = new PropertiesLoader();</span>
+        try {
+<span class="nc" id="L508">            loader.buildSVG();</span>
+<span class="nc" id="L509">        } catch (Exception e) {</span>
+<span class="nc" id="L510">            throw new RuntimeException(e);</span>
+<span class="nc" id="L511">        }</span>
+<span class="nc" id="L512">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

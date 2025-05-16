@@ -18,7 +18,6 @@ import java.util.List;
 
 @Route("")
 @JsModule("./newLanding.js")
-@JsModule("./area-media-viewer.js")
 public class NewLandingPage extends VerticalLayout {
 
     private final Gson gson = new Gson();
@@ -27,7 +26,7 @@ public class NewLandingPage extends VerticalLayout {
     private ComboBox<String> freguesiasDropdown = new ComboBox<>();
 
 
-    private PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();
+    private final PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();
 
     public NewLandingPage() {
 
@@ -35,7 +34,7 @@ public class NewLandingPage extends VerticalLayout {
         setSizeFull();
 
         // Título
-        H1 titulo = new H1("Exploração de Terrenos");
+        H1 titulo = new H1("Gestão do Território");
         titulo.addClassName("titulo1");
 
         // Dropdowns

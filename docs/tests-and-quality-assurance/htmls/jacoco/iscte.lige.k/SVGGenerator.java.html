@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SVGGenerator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Terrain-Fragmentation-Helper</a> &gt; <a href="index.source.html" class="el_package">iscte.lige.k</a> &gt; <span class="el_source">SVGGenerator.java</span></div><h1>SVGGenerator.java</h1><pre class="source lang-java linenums">package iscte.lige.k;
+
+import iscte.lige.k.dataStructures.SimplerProperty;
+import org.apache.batik.svggen.SVGGraphics2D;
+import org.w3c.dom.Document;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.awt.*;
+import java.io.FileWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.List;
+
+<span class="nc" id="L16">public class SVGGenerator {</span>
+
+    public static void exportPropertiesToSVG(List&lt;SimplerProperty&gt; properties, String munincipio, String freguesia) throws Exception {
+        // Cria documento SVG
+<span class="nc" id="L20">        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();</span>
+<span class="nc" id="L21">        SVGGraphics2D svgGenerator = new SVGGraphics2D(document);</span>
+
+        // Canvas com resolução aumentada
+<span class="nc" id="L24">        int width = 1050;</span>
+<span class="nc" id="L25">        int height = 700;</span>
+<span class="nc" id="L26">        svgGenerator.setSVGCanvasSize(new Dimension(width, height));</span>
+
+        // Normaliza coordenadas
+<span class="nc" id="L29">        double minX = properties.stream().mapToDouble(SimplerProperty::getX).min().orElse(0);</span>
+<span class="nc" id="L30">        double maxX = properties.stream().mapToDouble(SimplerProperty::getX).max().orElse(1);</span>
+<span class="nc" id="L31">        double minY = properties.stream().mapToDouble(SimplerProperty::getY).min().orElse(0);</span>
+<span class="nc" id="L32">        double maxY = properties.stream().mapToDouble(SimplerProperty::getY).max().orElse(1);</span>
+
+<span class="nc" id="L34">        double scaleX = width / (maxX - minX);</span>
+<span class="nc" id="L35">        double scaleY = height / (maxY - minY);</span>
+
+<span class="nc bnc" id="L37" title="All 2 branches missed.">        for (SimplerProperty p : properties) {</span>
+<span class="nc" id="L38">            double normX = (p.getX() - minX) * scaleX;</span>
+<span class="nc" id="L39">            double normY = (p.getY() - minY) * scaleY;</span>
+
+<span class="nc" id="L41">            boolean pertenceFiltro =</span>
+<span class="nc bnc" id="L42" title="All 4 branches missed.">                    (&quot;null&quot;.equals(munincipio) &amp;&amp; &quot;null&quot;.equals(freguesia)) ||</span>
+<span class="nc bnc" id="L43" title="All 4 branches missed.">                            (&quot;null&quot;.equals(freguesia) &amp;&amp; p.getCounty().contains(munincipio)) ||</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">                            p.getParish().contains(freguesia);</span>
+
+<span class="nc bnc" id="L46" title="All 2 branches missed.">            if (pertenceFiltro) {</span>
+                // Brilho leve antes do ponto principal
+<span class="nc" id="L48">                svgGenerator.setPaint(new Color(234, 175, 24, 30));</span>
+<span class="nc" id="L49">                svgGenerator.fillOval((int) normX - 1, (int) normY - 1, 4, 4);</span>
+
+                // Ponto principal pequeno e vibrante
+<span class="nc" id="L52">                svgGenerator.setPaint(new Color(234, 175, 24, 200));</span>
+<span class="nc" id="L53">                svgGenerator.fillOval((int) normX, (int) normY, 1, 1);</span>
+            } else {
+<span class="nc" id="L55">                svgGenerator.setPaint(new Color(234, 175, 24, 2)); // ponto quase invisível</span>
+<span class="nc" id="L56">                svgGenerator.fillOval((int) normX, (int) normY, 3, 3);</span>
+            }
+<span class="nc" id="L58">        }</span>
+
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (freguesia == null) freguesia = &quot;null&quot;;</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (munincipio == null) munincipio = &quot;null&quot;;</span>
+
+<span class="nc" id="L63">        String filePath = &quot;src/main/resources/META-INF/resources/svgs/&quot; + munincipio + &quot;-&quot; + freguesia + &quot;.svg&quot;;</span>
+
+<span class="nc" id="L65">        System.err.println(&quot;A escrever o ficheiro: &quot; + filePath);</span>
+
+        // Guarda como ficheiro SVG
+<span class="nc" id="L68">        try (Writer out = new FileWriter(filePath)) {</span>
+<span class="nc" id="L69">            svgGenerator.stream(out);</span>
+        }
+
+        // Adiciona viewBox manualmente ao SVG depois de o gerar
+<span class="nc" id="L73">        Path svgPath = Paths.get(filePath);</span>
+<span class="nc" id="L74">        Charset charset = StandardCharsets.UTF_8;</span>
+
+<span class="nc" id="L76">        String content = Files.readString(svgPath, charset);</span>
+
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        if (!content.contains(&quot;viewBox&quot;)) {</span>
+<span class="nc" id="L79">            content = content.replaceFirst(&quot;&lt;svg&quot;, &quot;&lt;svg viewBox=\&quot;0 0 &quot; + width + &quot; &quot; + height + &quot;\&quot;&quot;);</span>
+<span class="nc" id="L80">            Files.writeString(svgPath, content, charset);</span>
+        }
+<span class="nc" id="L82">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

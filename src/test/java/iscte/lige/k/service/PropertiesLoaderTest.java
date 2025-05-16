@@ -6,7 +6,11 @@ import iscte.lige.k.dataStructures.Trade;
 import iscte.lige.k.dataStructures.SimplerProperty;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -146,4 +150,34 @@ public class PropertiesLoaderTest {
             assertTrue(sp.getEntryNumber().length() >= 5);
         }
     }
+
+    // Lista reutilizável para injetar dados nos testes
+    private List<Property> testProperties = new ArrayList<>();
+    private Geometry geometry;
+
+    {
+        try {
+            geometry = new WKTReader().read("POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))");
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testGetAvgAreaWithMultipleProperties() {
+
+        loader.setLoadingOptions(new String[]{"freguesia", "Fajã da Ovelha"});
+
+        int result = loader.getAvgArea();
+        assertEquals(1292, result);
+    }
+
+    @Test
+    public void testGetAvgAreaByOwnerWithDuplicateOwner() {
+        loader.setLoadingOptions(new String[]{"freguesia", "Fajã da Ovelha"});
+
+        int result = loader.getAvgAreaByOwner();
+        assertEquals(1089, result);
+    }
+
 }

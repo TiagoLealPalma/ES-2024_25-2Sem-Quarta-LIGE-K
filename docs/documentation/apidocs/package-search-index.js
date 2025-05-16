@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"iscte.lige.k"},{"l":"iscte.lige.k.dataStructures"},{"l":"iscte.lige.k.service"},{"l":"iscte.lige.k.util"},{"l":"iscte.lige.k.views"}];updateSearchResults();

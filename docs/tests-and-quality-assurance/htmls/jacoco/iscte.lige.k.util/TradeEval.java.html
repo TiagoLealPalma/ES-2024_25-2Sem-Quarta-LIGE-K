@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TradeEval.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Terrain-Fragmentation-Helper</a> &gt; <a href="index.source.html" class="el_package">iscte.lige.k.util</a> &gt; <span class="el_source">TradeEval.java</span></div><h1>TradeEval.java</h1><pre class="source lang-java linenums">package iscte.lige.k.util;
+
+import iscte.lige.k.dataStructures.Trade;
+
+/**
+ * Class responsible for evaluating property trades based on area differences
+ * and converting the evaluation score into a color representation.
+ */
+<span class="nc" id="L9">public class TradeEval {</span>
+
+    /**
+     * Evaluates a property trade by calculating the percentage difference between
+     * the areas of the two properties involved.
+     *
+     * The result is stored as a score (0–100) in the given {@link Trade} object.
+     *
+     * @param trade the trade object containing the properties to be evaluated
+     */
+    public static void evaluateTrade(Trade trade){
+<span class="fc" id="L20">        double totalTradingArea = trade.getOwner1Property().getArea() + trade.getOwner2Property().getArea();</span>
+<span class="fc" id="L21">        double tradingAreaDelta = Math.abs(trade.getOwner1Property().getArea() - trade.getOwner2Property().getArea());</span>
+<span class="fc" id="L22">        trade.setScore((int)((1 - (tradingAreaDelta / totalTradingArea)) * 100));</span>
+<span class="fc" id="L23">    }</span>
+
+    /**
+     * Converts an evaluation score (0–100) into a semi-transparent RGBA color
+     * for visual representation.
+     *
+     * The color transitions from red (low score) to yellow (medium score)
+     * to green (high score).
+     *
+     * @param eval the evaluation score as an integer from 0 to 100
+     * @return a color string in the format &quot;rgba(r, g, 0, 0.3)&quot;
+     */
+    public static String IntToColor(int eval){
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        if (eval &lt; 0) eval = 0;</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        if (eval &gt; 100) eval = 100;</span>
+
+        int red, green;
+
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        if (eval &lt;= 50){</span>
+<span class="fc" id="L42">            red = 255;</span>
+<span class="fc" id="L43">            green = (int) (255 * (eval / 50.0));</span>
+        } else {
+<span class="fc" id="L45">            red = (int) (255 * (1 - (eval - 50) / 50.0));</span>
+<span class="fc" id="L46">            green = 255;</span>
+        }
+
+<span class="fc" id="L49">        return String.format(&quot;rgba(%d, %d, 0, 0.3)&quot;,red,green);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
