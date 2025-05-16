@@ -1,6 +1,5 @@
 package iscte.lige.k.views;
 
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
@@ -13,14 +12,13 @@ import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.Route;
 import iscte.lige.k.dataStructures.Trade;
 import iscte.lige.k.service.PropertiesLoader;
-import iscte.lige.k.service.TradeEval;
+import iscte.lige.k.util.TradeEval;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 
-@Route("Trades")
+@Route("trades")
 @Uses(ListBox.class)
 @Uses(HorizontalLayout.class)
 public class MainView extends VerticalLayout implements AfterNavigationObserver {
@@ -29,8 +27,13 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
     private final Div loadingText = new Div();
     private final Div spinner = new Div();
     private final HorizontalLayout content = new HorizontalLayout();
+    private final VerticalLayout vertical = new VerticalLayout();
+    private final Span areaLabel = new Span();
+    private final Span nOwnersLabel = new Span();
+    private final Span avgOwnerLabel = new Span();
 
-    public MainView() { }
+    public MainView() {
+    }
 
     @Override
     public void afterNavigation(AfterNavigationEvent event) {
@@ -63,9 +66,13 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
         System.err.println("Critério recebido: " + value);
 
 
-        if (!value.isBlank() && propertiesLoader.getParishes().contains(value)) {
+        if (!value.isBlank()) {
             System.err.println("Loading graph for: " + value);
             propertiesLoader.setLoadingOptions(new String[]{criteria, value});
+            areaLabel.setText("Area média por propriedades: " + propertiesLoader.getAvgArea());
+            nOwnersLabel.setText("Nº de propriedades: " + propertiesLoader.getPropertiesWithNeighbours().size());
+            avgOwnerLabel.setText("Area média por proprietários: " + propertiesLoader.getAvgAreaByOwner());
+
             buildUI(value);
         } else {
             removeAll();
@@ -76,11 +83,25 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
 
     private void buildUI(String freguesia) {
         showLoadingScreen(freguesia);
+        Div infoDiv = new Div();
+        infoDiv.setClassName("info-div");
+        infoDiv.setHeight("2rem");
+        infoDiv.getStyle().set("display", "flex");
+        infoDiv.getStyle().set("justify-content", "space-evenly");
+        areaLabel.setClassName("info-span");
+        nOwnersLabel.setClassName("info-span");
+        avgOwnerLabel.setClassName("info-span");
+        infoDiv.add(areaLabel, nOwnersLabel, avgOwnerLabel);
+        vertical.setHeight("100%");
+
+        vertical.add(infoDiv, content);
+
 
         // Prepare main content layout
         content.setWidthFull();
         content.setHeight("100vh");
         content.setSpacing(true);
+        vertical.getStyle().set("display", "none"); // initially hidden until JS loads
         content.getStyle().set("display", "none"); // initially hidden until JS loads
 
         // Create the graph viewer (must be in DOM early for JS to execute)
@@ -133,12 +154,13 @@ public class MainView extends VerticalLayout implements AfterNavigationObserver 
 
 
         // Add content to the page (graph will still be hidden until ready)
-        add(content);
+        add(vertical);
 
         // Show graph and hide loading screen when JS notifies that the graph is ready
         graph.onGraphLoaded(() -> {
             remove(loadingText, spinner);
             content.getStyle().set("display", "flex");
+            vertical.getStyle().set("display", "block");
             loadingText.setVisible(false);
             spinner.setVisible(false);
             System.err.println("Graph was loaded, hiding loading screen");

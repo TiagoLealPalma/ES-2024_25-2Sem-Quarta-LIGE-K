@@ -13,7 +13,7 @@ import iscte.lige.k.service.PropertiesLoader;
 import java.util.List;
 
 
-@Route("")
+@Route("oldLanding")
 @JsModule("./landing.js")
 public class LandingView extends VerticalLayout {
     private PropertiesLoader propertiesLoader = PropertiesLoader.getInstance();

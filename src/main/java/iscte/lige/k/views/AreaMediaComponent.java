@@ -1,4 +1,4 @@
-package iscte.lige.k;
+package iscte.lige.k.views;
 
 import com.vaadin.flow.component.ClientCallable;
 import com.vaadin.flow.component.Tag;

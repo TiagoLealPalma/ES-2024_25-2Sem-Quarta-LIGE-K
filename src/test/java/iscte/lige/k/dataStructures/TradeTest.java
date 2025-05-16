@@ -1,6 +1,5 @@
 package iscte.lige.k.dataStructures;
 
-import iscte.lige.k.service.TradeEval;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;

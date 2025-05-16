@@ -1,4 +1,4 @@
-package iscte.lige.k.service;
+package iscte.lige.k.util;
 
 import iscte.lige.k.dataStructures.Trade;
 

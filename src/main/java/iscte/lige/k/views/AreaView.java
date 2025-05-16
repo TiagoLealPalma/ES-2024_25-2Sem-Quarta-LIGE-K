@@ -1,8 +1,7 @@
-package iscte.lige.k;
+package iscte.lige.k.views;
 
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
-import iscte.lige.k.AreaMediaComponent;
 
 @Route("area")
 public class AreaView extends VerticalLayout {

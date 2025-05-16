@@ -222,11 +222,26 @@ html, body {
 
 vaadin-horizontal-layout {
     display: flex;
-    height: 100vh !important;
+    height: 100vh;
+}
+
+div.info-div{
+    justify-content: space-between;
+    align-items: center;
+    justify-items: center;
+    width: 100vw;
+    height: 3rem !important;
+    font-size: 1rem;
+}
+
+.info-span{
+    height: 1rem;
+    padding: 0.5rem;
 }
 
 vaadin-vertical-layout {
     padding: 0 !important;
+    height: 100% !important;
 }
 
 graph-viewer {

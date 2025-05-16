@@ -1,6 +1,6 @@
 package iscte.lige.k.dataStructures;
 
-import iscte.lige.k.service.TradeEval;
+import iscte.lige.k.util.TradeEval;
 
 import java.util.Objects;
 

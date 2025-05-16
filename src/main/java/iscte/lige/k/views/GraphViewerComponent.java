@@ -116,7 +116,7 @@ public class GraphViewerComponent extends Div {
         return graph;
     }
 
-    public JsonObject buildGraphData(Map<Integer, Owner> owners, HashMap<Owner, Map<Owner, Integer>> relations) {
+    public JsonObject buildGraphData(Map<Integer, Owner> owners, Map<Owner, Map<Owner, Integer>> relations) {
 
         JsonArray nodes = new JsonArray();
         JsonArray edges = new JsonArray();

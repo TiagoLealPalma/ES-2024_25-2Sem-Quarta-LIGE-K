@@ -6,6 +6,7 @@ import { color } from '@vaadin/vaadin-lumo-styles/color.js';
 import '@vaadin/vaadin-lumo-styles/color-global.js';
 import { typography } from '@vaadin/vaadin-lumo-styles/typography.js';
 import '@vaadin/vaadin-lumo-styles/typography-global.js';
+import stylesCss from 'themes/my-theme/styles.css?inline';
 
   let themeRemovers = new WeakMap();
   let targets = [];
@@ -15,7 +16,8 @@ import '@vaadin/vaadin-lumo-styles/typography-global.js';
     if (target !== document) {
       removers.push(injectGlobalCss(color.cssText, '', target, true));
 removers.push(injectGlobalCss(typography.cssText, '', target, true));
-
+removers.push(injectGlobalCss(stylesCss.toString(), '', target));
+    
     }
     
     

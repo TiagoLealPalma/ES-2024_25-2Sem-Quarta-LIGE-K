@@ -13,6 +13,7 @@ import java.util.List;
 public class Owner {
     private String name;
     private List<Property> properties;
+    private Double avgArea;
 
     /**
      * Helper inner class representing a group of adjacent properties,
@@ -83,6 +84,7 @@ public class Owner {
      * @return the average area (including merged groups)
      */
     public double calculateAvgArea() {
+        if (avgArea != null) return avgArea;
         if (properties.isEmpty()) return 0;
 
         List<Property> uniqueProperties = new ArrayList<>();
@@ -148,8 +150,9 @@ public class Owner {
             sum += area.area;
         }
 
+        this.avgArea = sum / (uniqueProperties.size() + jointProperties.size());
         // Compute the average
-        return sum / (uniqueProperties.size() + jointProperties.size());
+        return avgArea;
     }
 
     /**

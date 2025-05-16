@@ -1,0 +1,9 @@
+import 'Frontend/generated/jar-resources/flow-component-renderer.js';
+import '@vaadin/polymer-legacy-adapter/style-modules.js';
+import '@vaadin/list-box/theme/lumo/vaadin-list-box.js';
+import '@vaadin/vertical-layout/theme/lumo/vaadin-vertical-layout.js';
+import '@vaadin/tooltip/theme/lumo/vaadin-tooltip.js';
+import 'Frontend/graph-viewer.js';
+import '@vaadin/horizontal-layout/theme/lumo/vaadin-horizontal-layout.js';
+import '@vaadin/item/theme/lumo/vaadin-item.js';
+import 'Frontend/generated/jar-resources/lit-renderer.ts';

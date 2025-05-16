@@ -1,9 +1,9 @@
 package iscte.lige.k.service;
 
-import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import iscte.lige.k.dataStructures.Owner;
 import iscte.lige.k.dataStructures.Property;
 import iscte.lige.k.dataStructures.Trade;
+import iscte.lige.k.util.TradeEval;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;

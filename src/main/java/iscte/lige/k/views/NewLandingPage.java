@@ -16,8 +16,9 @@ import com.google.gson.*;
 import java.util.List;
 
 
-@Route("/Landing")
+@Route("")
 @JsModule("./newLanding.js")
+@JsModule("./area-media-viewer.js")
 public class NewLandingPage extends VerticalLayout {
 
     private final Gson gson = new Gson();
@@ -69,7 +70,7 @@ public class NewLandingPage extends VerticalLayout {
                 concelhosDropdown.getValue(), freguesiasDropdown.getValue()));
         verGrafo.addClassName("botao-ver-grafo1");
 
-        Anchor proprietariosLink = new Anchor("Trades?criteria=Proprietarios", "Mostre me os proprietários!");
+        Anchor proprietariosLink = new Anchor("trades?criteria=Proprietarios", "Mostre me os proprietários!");
         proprietariosLink.setClassName("prop-link");
 
 
@@ -117,13 +118,13 @@ public class NewLandingPage extends VerticalLayout {
     private void verGrafo(String ilha, String concelho, String freguesia) {
 
         if (ilha == null & concelho == null & freguesia == null){ // Load proprietários (Everything null)
-            UI.getCurrent().navigate("Trades?criteria=Proprietarios");
+            UI.getCurrent().navigate("trades?criteria=Proprietarios");
         } else if (ilha != null && !ilha.isEmpty()) {    // Load with ilha
-            UI.getCurrent().navigate("Trades?criteria=ilha&ilha=" + ilha);
+            UI.getCurrent().navigate("trades?criteria=ilha&ilha=" + ilha);
         } else if (concelho != null && !concelho.isEmpty()) {   // Load with concelho
-            UI.getCurrent().navigate("Trades?criteria=concelho&concelho=" + concelho);
+            UI.getCurrent().navigate("trades?criteria=concelho&concelho=" + concelho);
         } else if (freguesia != null && !freguesia.isEmpty()) {    // Load with freguesia
-            UI.getCurrent().navigate("Trades?criteria=freguesia&freguesia=" + freguesia);
+            UI.getCurrent().navigate("trades?criteria=freguesia&freguesia=" + freguesia);
         }
 
     }
