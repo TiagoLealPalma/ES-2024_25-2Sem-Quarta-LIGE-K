@@ -128,6 +128,8 @@ A documentação técnica do projeto foi gerada automaticamente com JavaDoc e en
 
 ## 🎥 Vídeo de Demonstração
 
+![Demonstração da App](docs/DemoGIF.gif)
+
 📺 Link para o vídeo no YouTube: https://youtu.be/fU-ICmFsbWs
 
 O vídeo demonstra:
