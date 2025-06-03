@@ -1,153 +1,128 @@
-# ES-2024_25-2Sem-Quarta-LIGE-K
+# Territorial Cohesion Monitoring & Action
 
+## 🎥 Demonstration Video
 
-## 👥 Identificação do Grupo
-ES-2024_25-2Sem-Quarta-LIGE-K  
-**Repositório GitHub:** https://github.com/TiagoLealPalma/ES-2024_25-2Sem-Quarta-LIGE-K/
-
-## 🧑‍🤝‍🧑 Membros do Grupo
-
-|       Nome Completo        | Número de Estudante | GitHub Username    |
-|----------------------------|---------------------|--------------------|
-| Miguel Orrico              |        120104       |   @miguel_orrico   |
-| Maria Beatriz Cruz         |        111348       |   @BeatrizfrCruz   |
-| Martim dos Reis Saldanha   |        111245       |   @martimreis      |
-| Tiago Leal Palma           |        110679       |   @TiagoLealPalma  |
+![App Demo](docs/DemoGIF.gif)
 
 ---
 
-## 📝 Descrição Geral
+## 📝 General Description
 
-Este projeto foi desenvolvido no âmbito da unidade curricular de **Engenharia de Software**, com o objetivo de implementar uma aplicação para **gestão do território**. O projeto segue a abordagem **Scrum** e apresenta um ciclo de desenvolvimento iterativo e incremental.
-
----
-
-## ⚠️ Funcionalidades Não Implementadas / Incompletas
-
-- Tudo implementado.
+This project was developed as part of the **Software Engineering** course, with the goal of implementing an application for **territorial management**. The project follows the **Scrum** methodology and features an **iterative and incremental development cycle**.
 
 ---
 
-## 🛠️ Tecnologias e Ferramentas Utilizadas
+## 🛠️ Technologies and Tools Used
 
 ### 🔧 Backend
 - **Java 21**
 - **Spring Boot 3.2.4**
 - **Vaadin 24.3.0**
-- **JTS (Java Topology Suite)** para geometria espacial
-- **Apache Commons CSV** para parsing de ficheiros CSV
-- **Gson** para manipulação de JSON
+- **JTS (Java Topology Suite)** for spatial geometry
+- **Apache Commons CSV** for parsing CSV files
+- **Gson** for JSON manipulation
 
 ### 💻 Frontend
-- **Vaadin Flow** com componentes personalizados
-- **v-leaflet** para visualização interativa de mapas
-- **HTML/CSS/JavaScript** com scripts próprios (`area-media-viewer.js`, `leaflet-map-viewer.js`, etc.)
+- **Vaadin Flow** with custom components
+- **v-leaflet** for interactive map visualisation
+- **HTML/CSS/JavaScript** with custom scripts (`area-media-viewer.js`, `leaflet-map-viewer.js`, etc.)
 
-### 📦 Gestão de Dependências
-- **Maven** (`pom.xml` com controlo centralizado de versões)
+### 📦 Dependency Management
+- **Maven** (`pom.xml` with centralised version control)
 
-### 🧪 Testes
+### 🧪 Testing
 - **JUnit 4.13.2**
-- **Maven Surefire Plugin** 
+- **Maven Surefire Plugin**
 - **JACOCO 8.13**
 
-### 🧰 Ferramentas de Apoio
-- **Git** e **GitHub** para controlo de versões e colaboração
-- **Trello / GitHub Projects** para gestão ágil com **Scrum**
-- **JavaDoc** para geração automática de documentação do código
-- **Ferramenta de cobertura de testes** (ex.: JaCoCo ou IntelliJ Coverage)
-
+### 🛠️ Supporting Tools
+- **Git** and **GitHub** for version control and collaboration
+- **Trello / GitHub Projects** for agile management with **Scrum**
+- **JavaDoc** for automatic code documentation
+- **Test coverage tools** (e.g., JaCoCo or IntelliJ Coverage)
 
 ---
 
-## 📁 Estrutura do Projeto
+## 📁 Project Structure
 ```
 Terrain-Fragmentation-Helper
-├── frontend/                    # Interface e visualização (Vaadin/JS)
-│   └── themes/                  # Tema visual personalizado (CSS)
+├── frontend/                    # UI and visualisation (Vaadin/JS)
+│   └── themes/                  # Custom visual theme (CSS)
 ├── src/
 │   └── main/
 │       ├── java/
 │       │   └── iscte/lige/k/
-│       │       ├── dataStructures/   # Estruturas principais: Property, Owner, Trade, etc
-│       │       ├── service/          # Serviços de carregamento e lógica de negócio
-│       │       ├── util/             # Utilitários como avaliação de trocas e geração de svgs para frontend
-│       │       └── views/            # Geração de SVG e visualizações
-|       |
-│       └── resources/         # Ficheiros de configuração e recursos 
+│       │       ├── dataStructures/   # Core structures: Property, Owner, Trade, etc.
+│       │       ├── service/          # Business logic and data loading
+│       │       ├── util/             # Utilities like trade evaluation and SVG generation
+│       │       └── views/            # View rendering and SVG generation
+│       └── resources/         # Configuration files and resources
 │
 ├── test/
 │   └── java/
-│       └── iscte/lige/k/      # Testes JUnit organizados por pacote
+│       └── iscte/lige/k/      # JUnit tests organised by package
 │
-├── pom.xml                    # Gestão de dependências e build com Maven
-├── application.properties     # Configurações Spring Boot
-├── README.md                  # Documento de apresentação do projeto
-├── target/                    # Código compilado e ficheiros gerados
-|
-└── docs/          # Pasta que guarda documentos de controlo de qualidade, documentação do código e gestão do projeto
-      ├── documentation/ # JavaDoc HTMLs
-      ├── tests-and-quality-assurance/ # Jacoco reports and IDE Coverage
-      └── trello/ # Prints da gestão no Trello
-```          
+├── pom.xml                    # Maven dependency and build management
+├── application.properties     # Spring Boot configuration
+├── README.md                  # Project overview
+├── target/                    # Compiled code and generated files
+└── docs/                      # Project documentation and quality control
+      ├── documentation/              # JavaDoc HTML
+      ├── tests-and-quality-assurance/ # JaCoCo reports and IDE coverage
+      └── trello/                    # Scrum board screenshots
+```
 
 ---
 
-## 🧪 Testes e Cobertura
+## 🧪 Testing and Coverage
 
-- Todos os testes foram implementados com **JUnit 4**.
-- A cobertura de testes excede **50%** em pelo menos duas métricas, incluindo **complexidade ciclomática** e **line coverage**.
-- A execução dos testes pode ser feita via IDE ou terminal com `mvn test`.
+- All tests implemented using **JUnit 4**
+- Test coverage exceeds **50%** in at least two metrics, including **cyclomatic complexity** and **line coverage**
+- Tests can be executed via IDE or terminal using `mvn test`
 
 ---
 
-## 📊 Relatório de Qualidade do Software
+## 📊 Software Quality Report
 
-O relatório de qualidade foi gerado com a ferramenta **JACOCO** e encontra-se disponível na pasta `docs/`.
+The software quality report was generated using **DESIGNATE** and is available in the `docs/` folder.
 
 ---
 
 ## 📚 JavaDoc
 
-A documentação técnica do projeto foi gerada automaticamente com JavaDoc e encontra-se na diretoria /docs/documentation/apidocs e pode ser acedido pelo ficheiro index.html.
+The technical documentation was generated using JavaDoc and is located in `/docs/documentation/apidocs`, accessible via the `index.html` file.
 
 ---
 
-## 📅 Gestão Ágil com Scrum
+## 🗓️ Agile Management with Scrum
 
-- Ferramenta de gestão: **Trello**
-- Planeamento por Sprints com definição de tarefas
-- Documentação de:
+- Management tool: **Trello**
+- Sprint planning with defined tasks
+- Documentation of:
   - Product Backlog
   - Sprint Planning
-  - Sprint Review e Retrospective
+  - Sprint Review & Retrospective
   - Burndown Charts
-- Rastreabilidade assegurada através de commits e pull requests associados às user stories
+- Traceability ensured through commits and pull requests linked to user stories
 
 ---
 
-## 🎥 Vídeo de Demonstração
+📺 YouTube Video Link: https://youtu.be/fU-ICmFsbWs
 
-![Demonstração da App](docs/DemoGIF.gif)
-
-📺 Link para o vídeo no YouTube: https://youtu.be/fU-ICmFsbWs
-
-O vídeo demonstra:
-- A gestão ágil do projeto (Scrum)
-- Organização do repositório GitHub
-- Execução dos testes JUnit e cobertura
-- Funcionalidades da aplicação em funcionamento
-- Bibliotecas e ferramentas utilizadas
+The video showcases:
+- Agile project management (Scrum)
+- GitHub repository structure
+- JUnit test execution and coverage
+- Working application features
+- Libraries and tools used
 
 ---
 
-## ✅ Estado Final
+## ✅ Final Status
 
-✔ Projeto funcional  
-✔ Testes sem falhas  
-✔ Qualidade avaliada e documentada  
-✔ Documentação JavaDoc completa  
-✔ Gestão Scrum evidenciada  
-✔ Entregáveis organizados no repositório  
-
-
+✔ Fully functional project  
+✔ All tests passing  
+✔ Quality assessed and documented  
+✔ Complete JavaDoc  
+✔ Scrum process documented  
+✔ Deliverables organised in the repository
